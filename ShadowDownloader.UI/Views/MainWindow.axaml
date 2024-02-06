@@ -1,0 +1,59 @@
+<Window
+    Height="800"
+    Icon="/Assets/avalonia-logo.ico"
+    Title="ShadowDownloader.UI"
+    Width="600"
+    WindowStartupLocation="CenterScreen"
+    d:DesignHeight="450"
+    d:DesignWidth="800"
+    mc:Ignorable="d"
+    x:Class="ShadowDownloader.UI.Views.MainWindow"
+    x:DataType="vm:MainWindowViewModel"
+    xmlns="https://github.com/avaloniaui"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:icon="using:FluentAvalonia.FluentIcons"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    xmlns:ui="using:FluentAvalonia.UI.Controls"
+    xmlns:uip="using:FluentAvalonia.UI.Controls.Primitives"
+    xmlns:vm="using:ShadowDownloader.UI.ViewModels"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+
+    <Design.DataContext>
+        <!--
+            This only sets the DataContext for the previewer in an IDE,
+            to set the actual DataContext for runtime, set the DataContext property in code (look at App.axaml.cs)
+        -->
+        <vm:MainWindowViewModel />
+    </Design.DataContext>
+    <Grid RowDefinitions="Auto,*">
+        <ui:CommandBar
+            DefaultLabelPosition="Bottom"
+            Grid.Row="0"
+            IsOpen="True">
+            <ui:CommandBar.PrimaryCommands>
+                <ui:CommandBarButton Label="新下载..">
+                    <ui:CommandBarButton.IconSource>
+                        <icon:FluentIconSource Icon="AddCircle24Regular" />
+                    </ui:CommandBarButton.IconSource>
+                </ui:CommandBarButton>
+                <ui:CommandBarButton
+                    Command="{Binding ShowAddUrlCommand}"
+                    CommandParameter="{Binding Path=Label, RelativeSource={RelativeSource Mode=Self}}"
+                    Label="奶牛快传">
+                    <ui:CommandBarButton.IconSource>
+                        <icon:FluentIconSource Icon="AddCircle24Filled" />
+                    </ui:CommandBarButton.IconSource>
+                </ui:CommandBarButton>
+            </ui:CommandBar.PrimaryCommands>
+
+        </ui:CommandBar>
+        <ProgressBar
+            Grid.Row="1"
+            Maximum="100"
+            Minimum="0"
+            Value="{Binding ProgressValue}"
+            Width="200" />
+        <TextBlock Grid.Row="1" Text="{Binding SpeedValue}" />
+        <ListBox Grid.Row="1" />
+    </Grid>
+</Window>
