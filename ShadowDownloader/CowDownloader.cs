@@ -26,18 +26,15 @@ public class CowDownloader: BaseDownloader
     private static readonly Regex FileIdPattern = new("[0-9a-f]{14}");
 
     private static Uri Referer => new("https://cowtransfer.com/");
-    
-    
+
+    public string? GetId(string url)
+    {
+        var fMatch = FileIdPattern.Match(url);
+        return fMatch.Groups.Count == 0 ? null : fMatch.Groups[0].Value;
+    }
     public async Task Download(string uri)
     {
-        var fMatch = FileIdPattern.Match(uri);
-        if (fMatch.Groups.Count == 0)
-        {
-            return;
-        }
-
-        Trace.WriteLine(fMatch.Groups[0].Value);
-        var fileId = fMatch.Groups[0].Value;
+        var fileId = GetId(uri);
         var (flag, message, guid) = await Fetch(fileId);
         if (flag)
         {
@@ -75,7 +72,7 @@ public class CowDownloader: BaseDownloader
         }
     }
 
-    private async Task<FetchResult> Fetch(string fileId)
+    public async Task<FetchResult> Fetch(string fileId)
     {
         var uri = Format(DownloadDetails, fileId);
         using var request = new HttpRequestMessage(HttpMethod.Get, uri);

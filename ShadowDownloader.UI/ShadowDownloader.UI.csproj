@@ -9,7 +9,6 @@
     </PropertyGroup>
 
     <ItemGroup>
-        <Folder Include="Models\" />
         <AvaloniaResource Include="Assets\**" />
     </ItemGroup>
 
@@ -32,5 +31,10 @@
 
     <ItemGroup>
       <ProjectReference Include="..\ShadowDownloader\ShadowDownloader.csproj" />
+    </ItemGroup>
+
+
+    <ItemGroup>
+      <Folder Include="Controls\" />
     </ItemGroup>
 </Project>

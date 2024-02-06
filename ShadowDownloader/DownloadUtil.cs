@@ -92,4 +92,26 @@ public class DownloadUtil
         temp = Math.Round(temp / 1024.0, 2);
         return $"{temp} GB/s";
     }
+    public static string ConvertSize(long speed)
+    {
+        var temp = Math.Round(speed / 1024.0, 2);
+        if (speed < 1024)
+        {
+            return $"{speed} B";
+        }
+
+        if (temp < 1024)
+        {
+            return $"{temp} KB";
+        }
+
+        temp = Math.Round(temp / 1024.0, 2);
+        if (temp < 1024)
+        {
+            return $"{temp} MB";
+        }
+
+        temp = Math.Round(temp / 1024.0, 2);
+        return $"{temp} GB";
+    }
 }

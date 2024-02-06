@@ -56,7 +56,7 @@ public class CowFileInfo
 {
     [JsonProperty("format")] public string Format { get; set; }
 
-    [JsonProperty("size")] public int Size { get; set; }
+    [JsonProperty("size")] public long Size { get; set; }
 
     [JsonProperty("title")] public string Title { get; set; }
 
