@@ -44,7 +44,7 @@ public class MainWindowViewModel : ViewModelBase
     {
         if (GetDownloadTask(e.TaskId) is { } task)
         {
-            task.Speed = e.SpeedShow;
+            task.Speed = e.Speed;
         }
     }
 
@@ -53,7 +53,7 @@ public class MainWindowViewModel : ViewModelBase
         if (GetDownloadTask(e.TaskId) is { } task)
         {
             task.Percent = e.Progress;
-            task.Received = DownloadUtil.ConvertSize(e.Received);
+            task.Received = e.Received;
         }
     }
 

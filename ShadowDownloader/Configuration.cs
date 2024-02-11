@@ -62,7 +62,10 @@ public class Configuration
                 return res;
             }
         }
-        return new Configuration(Directory.GetCurrentDirectory(), 
+
+        var downloadPath = Path.Combine(Directory.GetCurrentDirectory(), "downloads");
+        if (!Directory.Exists(downloadPath)) Directory.CreateDirectory(downloadPath);
+        return new Configuration(downloadPath, 
             10, 1L * 1024 * 1024, "");
     }
 }

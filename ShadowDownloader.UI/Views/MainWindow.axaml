@@ -21,7 +21,10 @@
     xmlns:vm="using:ShadowDownloader.UI.ViewModels"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
     <Window.Resources>
-        <converter:PercentConverter x:Key="percentConverter" />
+        <converter:PercentConverter x:Key="PercentConverter" />
+        <converter:ParallelConverter x:Key="ParallelConverter" />
+        <converter:SizeConverter x:Key="SizeConverter" />
+        <converter:SpeedConverter x:Key="SpeedConverter" />
 
         <DataTemplate x:DataType="model:CheckFileResult" x:Key="CheckFileTemplate">
             <Grid Margin="5">
@@ -100,13 +103,7 @@
                                             TextTrimming="CharacterEllipsis"
                                             ToolTip.Tip="{Binding Name}"
                                             VerticalAlignment="Center" />
-                                        <ui:InfoBadge Value="{Binding Parallel}">
-                                            <ToolTip.Tip>
-                                                <StackPanel Orientation="Horizontal">
-                                                    <TextBlock Text="{Binding Parallel}" />
-                                                </StackPanel>
-                                            </ToolTip.Tip>
-                                        </ui:InfoBadge>
+                                        <ui:InfoBadge ToolTip.Tip="{Binding Parallel, Converter={StaticResource ParallelConverter}, ConverterParameter=true}" Value="{Binding Parallel}" />
                                     </StackPanel>
                                     <StackPanel
                                         Grid.Column="2"
@@ -132,8 +129,8 @@
                                         VerticalAlignment="Center">
                                         <StackPanel VerticalAlignment="Center">
                                             <Grid ColumnDefinitions="Auto,*,Auto,*,Auto">
-                                                <TextBlock Grid.Column="0" Text="{Binding Speed}" />
-                                                <TextBlock Grid.Column="2" Text="{Binding SizeString}" />
+                                                <TextBlock Grid.Column="0" Text="{Binding Speed, Converter={StaticResource SpeedConverter}}" />
+                                                <TextBlock Grid.Column="2" Text="{Binding Size, Converter={StaticResource SizeConverter}}" />
                                                 <TextBlock Grid.Column="4" Text="00:00:00" />
                                             </Grid>
                                             <ProgressBar
@@ -143,7 +140,8 @@
                                                 Width="200" />
                                         </StackPanel>
                                         <TextBlock
-                                            Text="{Binding Percent, Converter={StaticResource percentConverter}}"
+                                            Text="{Binding Percent, Converter={StaticResource PercentConverter}}"
+                                            ToolTip.Tip="{Binding Received, Converter={StaticResource SizeConverter}, ConverterParameter=tip}"
                                             VerticalAlignment="Center"
                                             Width="40" />
                                     </StackPanel>
@@ -153,22 +151,25 @@
                                 <ListBox.ItemTemplate>
                                     <DataTemplate x:DataType="models:DownloadTask">
                                         <Grid ColumnDefinitions="Auto,*,Auto">
-                                            <StackPanel Grid.Column="0" Orientation="Horizontal">
-                                                <TextBlock Text="线程" />
-                                                <TextBlock Text="{Binding Id}" VerticalAlignment="Center" />
-                                            </StackPanel>
+                                            <TextBlock
+                                                Grid.Column="0"
+                                                Text="{Binding Id, Converter={StaticResource ParallelConverter}}"
+                                                VerticalAlignment="Center" />
                                             <StackPanel
                                                 Grid.Column="2"
                                                 Orientation="Horizontal"
                                                 Spacing="10"
                                                 VerticalAlignment="Center">
-                                                <TextBlock Text="{Binding SizeString}" />
+                                                <TextBlock Text="{Binding Size, Converter={StaticResource SizeConverter}}" />
                                                 <ProgressBar
                                                     Maximum="100"
                                                     Minimum="0"
                                                     Value="{Binding Percent}"
                                                     Width="100" />
-                                                <TextBlock Text="{Binding Percent, Converter={StaticResource percentConverter}}" Width="40" />
+                                                <TextBlock
+                                                    Text="{Binding Percent, Converter={StaticResource PercentConverter}}"
+                                                    ToolTip.Tip="{Binding Received, Converter={StaticResource SizeConverter}, ConverterParameter=tip}"
+                                                    Width="40" />
                                             </StackPanel>
                                         </Grid>
                                     </DataTemplate>

@@ -9,5 +9,5 @@ public class DbDownloadTask
     public int Parallel { get; set; }
     public double Percent { get; set; }
     public long Size { get; set; }
-    [SugarColumn(DefaultValue = "")] public string Received { get; set; } = "";
+    public long Received { get; set; }
 }

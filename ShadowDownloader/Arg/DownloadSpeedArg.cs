@@ -11,12 +11,7 @@ public class DownloadSpeedArg
      * 速度:B/S
      */
     public long Speed { get; }
-
-    /**
-     * 自动转换后的速度
-     */
-    public string SpeedShow => DownloadUtil.ConvertSpeed(Speed);
-
+    
     public DownloadSpeedArg(int taskId, long speed)
     {
         TaskId = taskId;

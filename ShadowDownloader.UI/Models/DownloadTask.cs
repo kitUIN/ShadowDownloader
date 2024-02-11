@@ -39,18 +39,17 @@ public class DownloadTask: ReactiveObject
     }
     
     public long Size { get; }
-    public string SizeString => DownloadUtil.ConvertSize(Size);
+
+    private long _received;
     
-    private string _received = "";
-    
-    public string Received
+    public long Received
     {
         get => _received;
         set => this.RaiseAndSetIfChanged(ref _received, value);
     }
-    private string _speed = "0 B/s";
+    private long _speed;
     
-    public string Speed
+    public long Speed
     {
         get => _speed;
         set => this.RaiseAndSetIfChanged(ref _speed, value);
