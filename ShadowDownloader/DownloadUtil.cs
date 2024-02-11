@@ -1,5 +1,4 @@
-﻿using System.Diagnostics;
-using System.Net;
+﻿using System.Net;
 using System.Net.Http.Headers;
 using Serilog;
 using ShadowDownloader.Arg;
@@ -8,34 +7,34 @@ using ShadowDownloader.Result;
 
 namespace ShadowDownloader;
 
-public class DownloadUtil
+public static class DownloadUtil
 {
     /// <summary>
     /// 线程下载进度更新事件
     /// </summary>
-    public static event EventHandler<ParallelDownloadProcessArg> ParallelDownloadProcessChanged;
+    public static event EventHandler<ParallelDownloadProcessArg>? ParallelDownloadProcessChanged;
 
     /// <summary>
     /// 线程启动更新事件
     /// </summary>
-    public static event EventHandler<ParallelDownloadStatusArg> ParallelDownloadStatusChanged;
+    public static event EventHandler<ParallelDownloadStatusArg>? ParallelDownloadStatusChanged;
 
     /// <summary>
     /// 下载启动更新事件
     /// </summary>
-    public static event EventHandler<DownloadStatusArg> DownloadStatusChanged;
+    public static event EventHandler<DownloadStatusArg>? DownloadStatusChanged;
 
     /// <summary>
     /// 下载进度更新事件
     /// </summary>
-    public static event EventHandler<DownloadProcessArg> DownloadProcessChanged;
+    public static event EventHandler<DownloadProcessArg>? DownloadProcessChanged;
 
     /// <summary>
     /// 下载速度更新事件
     /// </summary>
-    public static event EventHandler<DownloadSpeedArg> DownloadSpeedChanged;
+    public static event EventHandler<DownloadSpeedArg>? DownloadSpeedChanged;
 
-    public static HttpClient Client { get; set; } = new();
+    private static HttpClient Client { get; set; } = new();
 
     public static void SetProxy(Uri uri)
     {
@@ -63,7 +62,7 @@ public class DownloadUtil
         return response;
     }
 
-    public static async Task<HttpResponseMessage> ParallelGet(string url, RangeHeaderValue range, Uri? referer)
+    private static async Task<HttpResponseMessage> ParallelGet(string url, RangeHeaderValue range, Uri? referer)
     {
         using var request = new HttpRequestMessage(HttpMethod.Get, url);
         request.Headers.Range = range;
@@ -98,14 +97,14 @@ public class DownloadUtil
     public static async Task<DownloadTaskRecord> DownloadWithParallel(string link, long length, string name,
         string savePath,
         Configuration config,
-        Uri? referer, object sender)
+        Uri? referer, object? sender)
     {
+        var parallelSizeList = new List<long>();
         var source = new CancellationTokenSource();
         var taskId = ++config.TaskId;
         await config.SaveAsync();
         var filePath = Path.Combine(savePath, name + ".tmp");
-        var status = new DownloadStatusArg(taskId, DownloadStatus.Pending, name, length);
-        DownloadStatusChanged?.Invoke(sender, status);
+        var status = new DownloadStatusArg(taskId, DownloadStatus.Running, name, length);
         var tasks = new List<Task>();
         var parallel = config.Parallel; // 线程数
         var block = length % parallel == 0 ? length / parallel : length / parallel + 1;
@@ -128,11 +127,16 @@ public class DownloadUtil
 
             var parallelId = i + 1;
             var parallelSize = end - start;
+            parallelSizeList.Add(parallelSize);
             var parallelNow = 0L;
             var parallelStatus =
                 new ParallelDownloadStatusArg(taskId, parallelId, DownloadStatus.Pending, name, parallelSize);
             ParallelDownloadStatusChanged?.Invoke(sender, parallelStatus);
-            tasks.Add(Task.Run(async () =>
+
+            tasks.Add(new Task(ParallelDownloadAction, source.Token));
+            continue;
+
+            async void ParallelDownloadAction()
             {
                 try
                 {
@@ -140,8 +144,8 @@ public class DownloadUtil
                     ParallelDownloadStatusChanged?.Invoke(sender, parallelStatus);
                     var res = await ParallelGet(link, new RangeHeaderValue(start, end), referer);
                     await using var stream = await res.Content.ReadAsStreamAsync(source.Token);
-                    await using var fs = new FileStream(filePath, FileMode.OpenOrCreate,
-                        FileAccess.Write, FileShare.Write);
+                    await using var fs = new FileStream(filePath, FileMode.OpenOrCreate, FileAccess.Write,
+                        FileShare.Write);
                     var buffer = new byte[1024 * 128]; // 每128K汇报一次
                     int bytesRead;
                     fs.Seek(start, SeekOrigin.Begin);
@@ -152,41 +156,61 @@ public class DownloadUtil
                         parallelNow += bytesRead;
                         ParallelDownloadProcessChanged?.Invoke(sender,
                             new ParallelDownloadProcessArg(taskId, parallelId, parallelSize, parallelNow));
-                        DownloadProcessChanged?.Invoke(sender,
-                            new DownloadProcessArg(taskId, length, downloadNow));
+                        DownloadProcessChanged?.Invoke(sender, new DownloadProcessArg(taskId, length, downloadNow));
                     }
 
                     parallelStatus.SetStatus(DownloadStatus.Completed);
                     ParallelDownloadStatusChanged?.Invoke(sender, parallelStatus);
                 }
+                catch (TaskCanceledException)
+                {
+                    Log.Error("[Task {TaskId}| Parallel {ParallelId:000}] 任务取消", taskId, parallelId);
+                    parallelStatus.SetStatus(DownloadStatus.Pausing);
+                    ParallelDownloadStatusChanged?.Invoke(sender, parallelStatus);
+                }
                 catch (Exception ex)
                 {
-                    Log.Error("{E}", ex);
-                    Trace.WriteLine(ex);
+                    Log.Error(ex, "[Task {TaskId}| Parallel {ParallelId:000}]", taskId, parallelId);
                     parallelStatus.SetStatus(DownloadStatus.Error);
                     ParallelDownloadStatusChanged?.Invoke(sender, parallelStatus);
                 }
-            }, source.Token));
+            }
         }
 
-        tasks.Add(Task.Run(async () =>
-        {
-            var last = downloadNow;
-            while (last < length)
-            {
-                await Task.Delay(1000, source.Token);
-                var speed = (downloadNow - last);
-                DownloadSpeedChanged?.Invoke(sender, new DownloadSpeedArg(taskId, speed));
-                last = downloadNow;
-            }
+        tasks.Add(new Task(SpeedAction, source.Token));
+        return new DownloadTaskRecord(taskId, parallel, name, length, parallelSizeList, source, tasks);
 
-            status.SetStatus(DownloadStatus.Completed);
-            DownloadStatusChanged?.Invoke(sender, status);
-        }, source.Token));
-        status.SetStatus(DownloadStatus.Running);
-        DownloadStatusChanged?.Invoke(sender, status);
-        await Task.WhenAll(tasks.ToArray());
-        return new DownloadTaskRecord(taskId, parallel, name, length, source);
+        async void SpeedAction()
+        {
+            try
+            {
+                status.SetStatus(DownloadStatus.Running);
+                DownloadStatusChanged?.Invoke(sender, status);
+                var last = downloadNow;
+                while (last < length)
+                {
+                    await Task.Delay(1000, source.Token);
+                    var speed = (downloadNow - last);
+                    DownloadSpeedChanged?.Invoke(sender, new DownloadSpeedArg(taskId, speed));
+                    last = downloadNow;
+                }
+
+                status.SetStatus(DownloadStatus.Completed);
+                DownloadStatusChanged?.Invoke(sender, status);
+            }
+            catch (TaskCanceledException)
+            {
+                Log.Error("[Task {TaskId}| Parallel 000] 任务取消", taskId);
+                status.SetStatus(DownloadStatus.Pausing);
+                DownloadStatusChanged?.Invoke(sender, status);
+            }
+            catch (Exception ex)
+            {
+                Log.Error(ex, "[Task {TaskId}| Parallel 000]", taskId);
+                status.SetStatus(DownloadStatus.Error);
+                DownloadStatusChanged?.Invoke(sender, status);
+            }
+        }
     }
 
     /**
@@ -257,5 +281,6 @@ public class DownloadUtil
     }
 
     public record DownloadTaskRecord(int TaskId, int Parallel, string Name, long Size,
-        CancellationTokenSource TokenSource);
+        List<long> ParallelSizeList,
+        CancellationTokenSource TokenSource, List<Task> ScheduleTasks);
 }

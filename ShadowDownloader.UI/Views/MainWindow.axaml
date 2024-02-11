@@ -124,7 +124,7 @@
                                                 Icon="{Binding Status, Converter={StaticResource TaskPlayConverter}}"
                                                 Width="16" />
                                         </ui:HyperlinkButton>
-                                        <ui:HyperlinkButton IsEnabled="{Binding Status, Converter={StaticResource TaskCancelEnableConverter}}">
+                                        <ui:HyperlinkButton Command="{Binding CancelCommand}" IsEnabled="{Binding Status, Converter={StaticResource TaskCancelEnableConverter}}">
                                             <icon:FluentIcon
                                                 Height="16"
                                                 Icon="DismissCircle24Regular"

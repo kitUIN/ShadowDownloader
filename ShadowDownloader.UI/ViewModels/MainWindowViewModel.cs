@@ -1,12 +1,8 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Collections.ObjectModel;
-using System.Diagnostics;
 using System.Linq;
 using System.Reactive;
-using System.Reactive.Linq;
 using System.Threading.Tasks;
-using System.Windows.Input;
 using Avalonia.Controls;
 using Avalonia.Media;
 using FluentAvalonia.UI.Controls;
@@ -15,8 +11,8 @@ using Serilog;
 using ShadowDownloader.Arg;
 using ShadowDownloader.Enum;
 using ShadowDownloader.Model;
+using ShadowDownloader.UI.Extension;
 using ShadowDownloader.UI.Models;
-using ShadowDownloader.UI.Views;
 
 namespace ShadowDownloader.UI.ViewModels;
 
@@ -41,7 +37,7 @@ public class MainWindowViewModel : ViewModelBase
         }
     }
 
-    private void OnDownloadSpeedChanged(object? sender, DownloadSpeedArg e)
+    private async void OnDownloadSpeedChanged(object? sender, DownloadSpeedArg e)
     {
         if (GetDownloadTask(e.TaskId) is { } task)
         {
@@ -51,7 +47,7 @@ public class MainWindowViewModel : ViewModelBase
                 Task.Run(async () => await task.SaveDbAsync())
             };
             tasks.AddRange(task.Siblings.Select(pTask => Task.Run(async () => await pTask.SaveDbAsync())));
-            Task.WhenAll(tasks);
+            await Task.WhenAll(tasks);
         }
     }
 
@@ -66,80 +62,32 @@ public class MainWindowViewModel : ViewModelBase
 
     private async void OnParallelDownloadStatusChanged(object? sender, ParallelDownloadStatusArg e)
     {
-        if (e.Status == DownloadStatus.Pending)
+        Log.Information("下载任务[Task {TaskId}| Parallel {ParallelId:000}] 当前状态: {Status}", e.TaskId, e.ParallelId,
+            e.Status);
+        if (e.Status != DownloadStatus.Pending && GetParallelDownloadTask(e.TaskId, e.ParallelId) is { } pTask)
         {
-            if (GetDownloadTask(e.TaskId) is { } task)
-            {
-                var pTask = new ParallelDownloadTask(e.TaskId, e.ParallelId, e.Name, e.Size);
-                task.Append(pTask);
-                await task.SaveDbAsync();
-                pTask.Status = DownloadStatus.Running;
-                await pTask.SaveDbAsync();
-                Log.Information("添加下载任务线程: [Task {TaskId}] 线程{ParallelId} , Size:{Size}B", e.TaskId, e.ParallelId,
-                    e.Size);
-            }
-        }
-        else if (e.Status != DownloadStatus.Running)
-        {
-            if (GetParallelDownloadTask(e.TaskId, e.ParallelId) is { } pTask)
-            {
-                pTask.Status = e.Status;
-                await pTask.SaveDbAsync();
-            }
+            pTask.Status = e.Status;
+            await pTask.SaveDbAsync();
         }
     }
 
 
     private async void OnDownloadStatusChanged(object? sender, DownloadStatusArg e)
     {
-        if (e.Status == DownloadStatus.Pending)
+        Log.Information("下载任务[Task {TaskId}| Parallel 000] 当前状态: {Status}", e.TaskId, e.Status);
+        if (e.Status != DownloadStatus.Pending && GetDownloadTask(e.TaskId) is { } task)
         {
-            var task = new DownloadTask(e.TaskId, e.Name, e.Size);
-            Tasks.Add(task);
-            task.Status = DownloadStatus.Running;
+            task.Status = e.Status;
             await task.SaveDbAsync();
-            Log.Information("添加下载任务: [Task {TaskId}]{Name}, Size:{Size}B", e.TaskId, e.Name, e.Size);
-        }
-        else if (e.Status != DownloadStatus.Running)
-        {
-            if (GetDownloadTask(e.TaskId) is { } task)
-            {
-                await task.SaveDbAsync();
-            }
+            Log.Information("下载任务[Task {TaskId}| Parallel 000] 保存状态: {Status}", e.TaskId, e.Status);
         }
     }
 
-    private DownloadTask? GetDownloadTask(int taskId)
-    {
-        return Tasks.FirstOrDefault(x => x.TaskId == taskId);
-    }
 
-    private ParallelDownloadTask? GetParallelDownloadTask(int taskId, int parallelId)
-    {
-        if (GetDownloadTask(taskId) is { } task)
-        {
-            for (var i = 0; i < task.Siblings.Count; i++)
-            {
-                if (task.Siblings[i].ParallelId == parallelId)
-                    return task.Siblings[i];
-            }
-        }
-
-        return null;
-    }
-
-    public async Task<ContentDialogResult> ContentDialogShowAsync(ContentDialog dialog)
+    private async Task<ContentDialogResult> ContentDialogShowAsync(ContentDialog dialog)
     {
         var dialogResult = await dialog.ShowAsync();
         return dialogResult;
-    }
-
-    private double _progressValue = 0;
-
-    public double ProgressValue
-    {
-        get => _progressValue;
-        set => this.RaiseAndSetIfChanged(ref _progressValue, value);
     }
 
     #region 检查文件窗口是否打开
@@ -190,12 +138,21 @@ public class MainWindowViewModel : ViewModelBase
 
     #endregion
 
-    private string _speedValue = "0 MB/s";
-
-    public string SpeedValue
+    private void InitTask(DownloadUtil.DownloadTaskRecord taskRecord)
     {
-        get => _speedValue;
-        set => this.RaiseAndSetIfChanged(ref _speedValue, value);
+        var task = new DownloadTask(taskRecord.TaskId, taskRecord.Name, taskRecord.Size, taskRecord.Parallel,
+            taskRecord.TokenSource);
+        Tasks.Add(task);
+        Log.Information("[Task {TaskId}| Parallel 000]添加下载任务: {Name}, Size:{Size}B", task.TaskId, task.Name, task.Size);
+        for (var i = 0; i < taskRecord.ParallelSizeList.Count; i++)
+        {
+            var pTask = new ParallelDownloadTask(taskRecord.TaskId,
+                i + 1, taskRecord.Name, taskRecord.ParallelSizeList[i]);
+            task.Siblings.Add(pTask);
+            Log.Information("[Task {TaskId}| Parallel {ParallelId:000}]添加下载任务线程: Size:{Size}B", pTask.TaskId,
+                pTask.ParallelId,
+                pTask.Size);
+        }
     }
 
     public ReactiveCommand<string, Unit> ShowAddUrlCommand =>
@@ -204,12 +161,14 @@ public class MainWindowViewModel : ViewModelBase
     public ReactiveCommand<Unit, Unit> DownloadAllCommand =>
         ReactiveCommand.CreateFromTask(DownloadAllFileAsync);
 
-    public async Task DownloadAllFileAsync()
+    private async Task DownloadAllFileAsync()
     {
         IsOpen = false;
         foreach (var checkFile in CheckFiles)
         {
-            var taskId = await App.Downloader.Download("cow", checkFile);
+            var taskRecord = await App.Downloader.Download("cow", checkFile);
+            InitTask(taskRecord);
+            taskRecord.ScheduleTasks.StartAll();
         }
     }
 
@@ -234,7 +193,7 @@ public class MainWindowViewModel : ViewModelBase
         };
         dialog.PrimaryButtonClick += async (sender, args) =>
         {
-            if (sender.Content is not TextBox { Text: string url }) return;
+            if (sender.Content is not TextBox { Text: { } url }) return;
             var res = App.Downloader.CheckUrl("cow", url);
             if (res.Success)
             {
@@ -254,5 +213,25 @@ public class MainWindowViewModel : ViewModelBase
             IsVisibleInCheckFile = false;
             CheckFiles.Add(fcr);
         }
+    }
+
+
+    private DownloadTask? GetDownloadTask(int taskId)
+    {
+        return Tasks.FirstOrDefault(x => x.TaskId == taskId);
+    }
+
+    private ParallelDownloadTask? GetParallelDownloadTask(int taskId, int parallelId)
+    {
+        if (GetDownloadTask(taskId) is { } task)
+        {
+            for (var i = 0; i < task.Siblings.Count; i++)
+            {
+                if (task.Siblings[i].ParallelId == parallelId)
+                    return task.Siblings[i];
+            }
+        }
+
+        return null;
     }
 }
