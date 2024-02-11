@@ -1,6 +1,7 @@
 using Avalonia;
 using Avalonia.Controls.ApplicationLifetimes;
 using Avalonia.Markup.Xaml;
+using Serilog;
 using ShadowDownloader.UI.Models;
 using ShadowDownloader.UI.ViewModels;
 using ShadowDownloader.UI.Views;
@@ -12,6 +13,9 @@ public partial class App : Application
     public override void Initialize()
     {
         AvaloniaXamlLoader.Load(this);
+        Log.Logger = new LoggerConfiguration()
+            .WriteTo.File("log-.txt", rollingInterval: RollingInterval.Day)
+            .CreateLogger();
     }
 
     private void InitDb()

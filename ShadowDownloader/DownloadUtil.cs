@@ -103,15 +103,15 @@ public class DownloadUtil
         var status = new DownloadStatusArg(taskId, DownloadStatus.Pending, name, length);
         DownloadStatusChanged?.Invoke(sender,status);
         var tasks = new List<Task>();
-        var parallel = config.Parallel;
+        var parallel = config.Parallel; // 线程数
         var block = length % parallel == 0 ? length / parallel : length / parallel + 1;
-        if (block < config.MinBlockSize)
+        if (block < config.MinBlockSize) // 如果分割后的大小小于最小块大小,则根据块大小选择线程数
         {
             block = config.MinBlockSize;
             parallel = (int)(length / block);
             if (length % block != 0) parallel++;
         }
-        var total = 0L;
+        var downloadNow = 0L; // 当前下载已接收
         for (var i = 0; i < parallel; i++)
         {
             var start = i * block;
@@ -120,7 +120,7 @@ public class DownloadUtil
             {
                 end = length;
             }
-            var parallelId = i;
+            var parallelId = i + 1;
             var parallelStatus =
                 new ParallelDownloadStatusArg(taskId, parallelId, DownloadStatus.Pending, name, length);
             ParallelDownloadStatusChanged?.Invoke(sender,parallelStatus);
@@ -128,23 +128,25 @@ public class DownloadUtil
             {
                 try
                 {
+                    var parallelNow = 0L;
                     parallelStatus.SetStatus(DownloadStatus.Running);
                     ParallelDownloadStatusChanged?.Invoke(sender,parallelStatus);
                     var res = await ParallelGet(link, new RangeHeaderValue(start, end), referer);
                     await using var stream = await res.Content.ReadAsStreamAsync(token);
                     await using var fs = new FileStream(filePath, FileMode.OpenOrCreate,
                         FileAccess.Write, FileShare.Write);
-                    var buffer = new byte[1024 * 64];
+                    var buffer = new byte[1024 * 256]; // 每256K汇报一次
                     int bytesRead;
                     fs.Seek(start, SeekOrigin.Begin);
                     while ((bytesRead = await stream.ReadAsync(buffer.AsMemory(0, buffer.Length), token)) > 0)
                     {
                         await fs.WriteAsync(buffer.AsMemory(0, bytesRead), token);
-                        total += bytesRead;
+                        downloadNow += bytesRead;
+                        parallelNow += bytesRead;
                         ParallelDownloadProcessChanged?.Invoke(sender,
-                            new ParallelDownloadProcessArg(taskId, parallelId, end-start, bytesRead));
+                            new ParallelDownloadProcessArg(taskId, parallelId, end - start, parallelNow));
                         DownloadProcessChanged?.Invoke(sender,
-                            new DownloadProcessArg(taskId, length, total));
+                            new DownloadProcessArg(taskId, length, downloadNow));
                     }
                     parallelStatus.SetStatus(DownloadStatus.Completed);
                     ParallelDownloadStatusChanged?.Invoke(sender,parallelStatus);
@@ -161,13 +163,13 @@ public class DownloadUtil
 
         tasks.Add(Task.Run(async () =>
         {
-            var last = total;
+            var last = downloadNow;
             while (last < length)
             {
                 await Task.Delay(1000, token);
-                var speed = (total - last);
+                var speed = (downloadNow - last);
                 DownloadSpeedChanged?.Invoke(sender, new DownloadSpeedArg(taskId, speed));
-                last = total;
+                last = downloadNow;
             }
 
             if (last >= length)
@@ -178,9 +180,9 @@ public class DownloadUtil
             }
             
         }, token));
-        await Task.WhenAll(tasks.ToArray());
         status.SetStatus(DownloadStatus.Running);
         DownloadStatusChanged?.Invoke(sender, status);
+        await Task.WhenAll(tasks.ToArray());
         return taskId;
     }
     /**
