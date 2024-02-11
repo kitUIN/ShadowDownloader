@@ -6,18 +6,16 @@ using ShadowDownloader.Enum;
 
 namespace ShadowDownloader.UI.Converter;
 
-public class TaskCancelEnableConverter : IValueConverter
+public abstract class DownloadStatusAbstractConverter : IValueConverter
 {
+    protected abstract object? DownloadStatusConvert(DownloadStatus status, object? parameter);
+
     public object? Convert(object? value, Type targetType, object? parameter, CultureInfo culture)
     {
         if (value is not DownloadStatus status)
             return new BindingNotification(new InvalidCastException(),
                 BindingErrorType.Error);
-        return status switch
-        {
-            DownloadStatus.Running => true,
-            _ => false,
-        };
+        return DownloadStatusConvert(status, parameter);
     }
 
 

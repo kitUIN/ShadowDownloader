@@ -2,14 +2,16 @@
 
 namespace ShadowDownloader.UI.Converter;
 
-public class TaskPlayEnableConverter : DownloadStatusAbstractConverter
+public class TaskRemoveEnableConverter : DownloadStatusAbstractConverter
 {
     protected override object? DownloadStatusConvert(DownloadStatus status, object? parameter)
     {
         return status switch
         {
-            DownloadStatus.Completed => false,
-            _ => true,
+            DownloadStatus.Running => true,
+            DownloadStatus.Pausing => true,
+            DownloadStatus.Pending => true,
+            _ => false,
         };
     }
 }

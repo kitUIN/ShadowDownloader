@@ -1,20 +1,12 @@
-﻿using System;
-using System.Globalization;
-using Avalonia.Data;
-using Avalonia.Data.Converters;
-using FluentAvalonia.FluentIcons;
+﻿using FluentAvalonia.FluentIcons;
 using ShadowDownloader.Enum;
 
 namespace ShadowDownloader.UI.Converter;
 
-public class TaskStatusConverter : IValueConverter
+public class TaskStatusConverter : DownloadStatusAbstractConverter
 {
-    public object? Convert(object? value, Type targetType, object? parameter, CultureInfo culture)
+    protected override object? DownloadStatusConvert(DownloadStatus status, object? parameter)
     {
-        if (value is not DownloadStatus status)
-            return new BindingNotification(new InvalidCastException(),
-                BindingErrorType.Error);
-
         return status switch
         {
             DownloadStatus.Error => FluentIconSymbol.DismissCircle24Filled,
@@ -22,10 +14,5 @@ public class TaskStatusConverter : IValueConverter
             DownloadStatus.Running => FluentIconSymbol.Info24Filled,
             _ => FluentIconSymbol.ErrorCircle24Filled
         };
-    }
-
-    public object? ConvertBack(object? value, Type targetType, object? parameter, CultureInfo culture)
-    {
-        throw new NotImplementedException();
     }
 }

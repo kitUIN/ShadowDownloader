@@ -21,16 +21,17 @@
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
     <Window.Resources>
         <converter:PercentConverter x:Key="PercentConverter" />
-
         <converter:ParallelConverter x:Key="ParallelConverter" />
         <converter:SizeConverter x:Key="SizeConverter" />
         <converter:SpeedConverter x:Key="SpeedConverter" />
         <converter:RemainTimeConverter x:Key="RemainTimeConverter" />
         <converter:ProgressColorConverter x:Key="ProgressColorConverter" />
         <converter:TaskStatusConverter x:Key="TaskStatusConverter" />
+        <converter:TaskStatusStringConverter x:Key="TaskStatusStringConverter" />
         <converter:TaskPlayConverter x:Key="TaskPlayConverter" />
         <converter:TaskPlayEnableConverter x:Key="TaskPlayEnableConverter" />
-        <converter:TaskCancelEnableConverter x:Key="TaskCancelEnableConverter" />
+        <converter:TaskRemoveEnableConverter x:Key="TaskCancelEnableConverter" />
+        <converter:TaskPlayTipConverter x:Key="TaskPlayTipConverter" />
 
         <DataTemplate x:DataType="model:CheckFileResult" x:Key="CheckFileTemplate">
             <Grid Margin="5">
@@ -103,6 +104,7 @@
                                         <icon:FluentIcon
                                             Foreground="{Binding Status, Converter={StaticResource ProgressColorConverter}}"
                                             Icon="{Binding Status, Converter={StaticResource TaskStatusConverter}}"
+                                            ToolTip.Tip="{Binding Status, Converter={StaticResource TaskStatusStringConverter}}"
                                             Width="16" />
                                         <TextBlock
                                             FontSize="15"
@@ -118,13 +120,16 @@
                                         Grid.Column="2"
                                         Margin="4,0"
                                         Orientation="Horizontal">
-                                        <ui:HyperlinkButton Command="{Binding StatusCommand}" IsEnabled="{Binding Status, Converter={StaticResource TaskPlayEnableConverter}}">
+                                        <ui:HyperlinkButton
+                                            Command="{Binding StatusCommand}"
+                                            IsEnabled="{Binding Status, Converter={StaticResource TaskPlayEnableConverter}}"
+                                            ToolTip.Tip="{Binding Status, Converter={StaticResource TaskPlayTipConverter}}">
                                             <icon:FluentIcon
                                                 Height="16"
                                                 Icon="{Binding Status, Converter={StaticResource TaskPlayConverter}}"
                                                 Width="16" />
                                         </ui:HyperlinkButton>
-                                        <ui:HyperlinkButton IsEnabled="{Binding Status, Converter={StaticResource TaskCancelEnableConverter}}">
+                                        <ui:HyperlinkButton IsEnabled="{Binding Status, Converter={StaticResource TaskCancelEnableConverter}}" ToolTip.Tip="删除">
                                             <icon:FluentIcon
                                                 Height="16"
                                                 Icon="DismissCircle24Regular"
@@ -172,6 +177,7 @@
                                                 VerticalAlignment="Center">
                                                 <TextBlock Text="{Binding Size, Converter={StaticResource SizeConverter}}" />
                                                 <ProgressBar
+                                                    Foreground="{Binding Status, Converter={StaticResource ProgressColorConverter}}"
                                                     Maximum="100"
                                                     Minimum="0"
                                                     Value="{Binding Percent}"
