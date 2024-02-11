@@ -234,4 +234,19 @@ public class DownloadUtil
         temp = Math.Round(temp / 1024.0, 2);
         return $"{temp} G";
     }
+    public static string ConvertRemainTime(long duration)
+    {
+        var ts = new TimeSpan(0, 0, Convert.ToInt32(duration));
+        var str = ts.Hours switch
+        {
+            > 0 => $"{ts.Hours:00}:{ts.Minutes:00}:${ts.Seconds:00}",
+            0 when ts.Minutes > 0 => $"00:{ts.Minutes:00}:{ts.Seconds:00}",
+            _ => ""
+        };
+        if (ts is { Hours: 0, Minutes: 0 })
+        {
+            str = $"00:00:{ts.Seconds:00}";
+        }
+        return str;
+    }
 }

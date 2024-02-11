@@ -39,7 +39,13 @@ public class DownloadTask: ReactiveObject
     }
     
     public long Size { get; }
-
+    private long _remainTime;
+    
+    public long RemainTime
+    {
+        get => _remainTime;
+        set => this.RaiseAndSetIfChanged(ref _remainTime, value);
+    }
     private long _received;
     
     public long Received
@@ -52,7 +58,11 @@ public class DownloadTask: ReactiveObject
     public long Speed
     {
         get => _speed;
-        set => this.RaiseAndSetIfChanged(ref _speed, value);
+        set
+        {
+            this.RaiseAndSetIfChanged(ref _speed, value);
+            RemainTime = (Size - Received) / _speed;
+        }
     }
     private ObservableCollection<DownloadTask> _siblings = new();
 

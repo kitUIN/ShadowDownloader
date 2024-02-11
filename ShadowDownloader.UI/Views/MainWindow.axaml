@@ -25,6 +25,7 @@
         <converter:ParallelConverter x:Key="ParallelConverter" />
         <converter:SizeConverter x:Key="SizeConverter" />
         <converter:SpeedConverter x:Key="SpeedConverter" />
+        <converter:RemainTimeConverter x:Key="RemainTimeConverter" />
 
         <DataTemplate x:DataType="model:CheckFileResult" x:Key="CheckFileTemplate">
             <Grid Margin="5">
@@ -125,13 +126,13 @@
                                     <StackPanel
                                         Grid.Column="4"
                                         Orientation="Horizontal"
-                                        Spacing="4"
+                                        Spacing="10"
                                         VerticalAlignment="Center">
                                         <StackPanel VerticalAlignment="Center">
                                             <Grid ColumnDefinitions="Auto,*,Auto,*,Auto">
                                                 <TextBlock Grid.Column="0" Text="{Binding Speed, Converter={StaticResource SpeedConverter}}" />
                                                 <TextBlock Grid.Column="2" Text="{Binding Size, Converter={StaticResource SizeConverter}}" />
-                                                <TextBlock Grid.Column="4" Text="00:00:00" />
+                                                <TextBlock Grid.Column="4" Text="{Binding RemainTime, Converter={StaticResource RemainTimeConverter}}" />
                                             </Grid>
                                             <ProgressBar
                                                 Maximum="100"
@@ -143,7 +144,7 @@
                                             Text="{Binding Percent, Converter={StaticResource PercentConverter}}"
                                             ToolTip.Tip="{Binding Received, Converter={StaticResource SizeConverter}, ConverterParameter=tip}"
                                             VerticalAlignment="Center"
-                                            Width="40" />
+                                            Width="50" />
                                     </StackPanel>
                                 </Grid>
                             </Expander.Header>
@@ -169,7 +170,7 @@
                                                 <TextBlock
                                                     Text="{Binding Percent, Converter={StaticResource PercentConverter}}"
                                                     ToolTip.Tip="{Binding Received, Converter={StaticResource SizeConverter}, ConverterParameter=tip}"
-                                                    Width="40" />
+                                                    Width="50" />
                                             </StackPanel>
                                         </Grid>
                                     </DataTemplate>
