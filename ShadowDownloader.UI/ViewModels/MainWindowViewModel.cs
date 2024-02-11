@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Diagnostics;
 using System.Linq;
@@ -10,6 +11,7 @@ using Avalonia.Controls;
 using Avalonia.Media;
 using FluentAvalonia.UI.Controls;
 using ReactiveUI;
+using Serilog;
 using ShadowDownloader.Arg;
 using ShadowDownloader.Enum;
 using ShadowDownloader.Model;
@@ -22,33 +24,38 @@ public class MainWindowViewModel : ViewModelBase
 {
     public MainWindowViewModel()
     {
-        DownloadUtil.DownloadStatusChanged += DownloadUtilOnDownloadStatusChanged;
-        DownloadUtil.ParallelDownloadStatusChanged += DownloadUtilOnParallelDownloadStatusChanged;
-        DownloadUtil.DownloadProcessChanged += DownloadUtilOnDownloadProcessChanged;
-        DownloadUtil.DownloadSpeedChanged += DownloadUtilOnDownloadSpeedChanged;
-        DownloadUtil.ParallelDownloadProcessChanged += DownloadUtilOnParallelDownloadProcessChanged;
+        DownloadUtil.DownloadStatusChanged += OnDownloadStatusChanged;
+        DownloadUtil.ParallelDownloadStatusChanged += OnParallelDownloadStatusChanged;
+        DownloadUtil.DownloadProcessChanged += OnDownloadProcessChanged;
+        DownloadUtil.DownloadSpeedChanged += OnDownloadSpeedChanged;
+        DownloadUtil.ParallelDownloadProcessChanged += OnParallelDownloadProcessChanged;
     }
 
-    private void DownloadUtilOnParallelDownloadProcessChanged(object? sender, ParallelDownloadProcessArg e)
+    private async void OnParallelDownloadProcessChanged(object? sender, ParallelDownloadProcessArg e)
     {
-        if (GetDownloadTask(e.TaskId) is { } task)
+        if (GetParallelDownloadTask(e.TaskId, e.ParallelId) is { } pTask)
         {
-            if (task.Siblings.FirstOrDefault(x => x.Id == e.ParallelId) is { } pTask)
-            {
-                pTask.Percent = e.Progress;
-            }
+            pTask.Percent = e.Progress;
+            pTask.Received = e.Received;
+            await pTask.SaveDbAsync();
         }
     }
 
-    private void DownloadUtilOnDownloadSpeedChanged(object? sender, DownloadSpeedArg e)
+    private void OnDownloadSpeedChanged(object? sender, DownloadSpeedArg e)
     {
         if (GetDownloadTask(e.TaskId) is { } task)
         {
             task.Speed = e.Speed;
+            var tasks = new List<Task>
+            {
+                Task.Run(async () => await task.SaveDbAsync())
+            };
+            tasks.AddRange(task.Siblings.Select(pTask => Task.Run(async () => await pTask.SaveDbAsync())));
+            Task.WhenAll(tasks);
         }
     }
 
-    private void DownloadUtilOnDownloadProcessChanged(object? sender, DownloadProcessArg e)
+    private void OnDownloadProcessChanged(object? sender, DownloadProcessArg e)
     {
         if (GetDownloadTask(e.TaskId) is { } task)
         {
@@ -57,28 +64,43 @@ public class MainWindowViewModel : ViewModelBase
         }
     }
 
-    private void DownloadUtilOnParallelDownloadStatusChanged(object? sender, ParallelDownloadStatusArg e)
+    private async void OnParallelDownloadStatusChanged(object? sender, ParallelDownloadStatusArg e)
     {
         if (e.Status == DownloadStatus.Pending)
         {
             if (GetDownloadTask(e.TaskId) is { } task)
             {
-                task.Append(new DownloadTask(e.ParallelId,e.Name,e.Size));
-                
+                var pTask = new ParallelDownloadTask(e.TaskId, e.ParallelId, e.Name, e.Size);
+                task.Append(pTask);
+                await task.SaveDbAsync();
+                pTask.Status = DownloadStatus.Running;
+                await pTask.SaveDbAsync();
+                Log.Information("添加下载任务线程: [Task {TaskId}] 线程{ParallelId} , Size:{Size}B", e.TaskId, e.ParallelId,
+                    e.Size);
+            }
+        }
+        else if (e.Status != DownloadStatus.Running)
+        {
+            if (GetParallelDownloadTask(e.TaskId, e.ParallelId) is { } pTask)
+            {
+                pTask.Status = e.Status;
+                await pTask.SaveDbAsync();
             }
         }
     }
 
 
-    private async void DownloadUtilOnDownloadStatusChanged(object? sender, DownloadStatusArg e)
+    private async void OnDownloadStatusChanged(object? sender, DownloadStatusArg e)
     {
         if (e.Status == DownloadStatus.Pending)
         {
             var task = new DownloadTask(e.TaskId, e.Name, e.Size);
             Tasks.Add(task);
+            task.Status = DownloadStatus.Running;
             await task.SaveDbAsync();
+            Log.Information("添加下载任务: [Task {TaskId}]{Name}, Size:{Size}B", e.TaskId, e.Name, e.Size);
         }
-        else if(e.Status == DownloadStatus.Completed)
+        else if (e.Status != DownloadStatus.Running)
         {
             if (GetDownloadTask(e.TaskId) is { } task)
             {
@@ -86,16 +108,32 @@ public class MainWindowViewModel : ViewModelBase
             }
         }
     }
+
     private DownloadTask? GetDownloadTask(int taskId)
     {
-        return Tasks.FirstOrDefault(x => x.Id == taskId);
+        return Tasks.FirstOrDefault(x => x.TaskId == taskId);
     }
+
+    private ParallelDownloadTask? GetParallelDownloadTask(int taskId, int parallelId)
+    {
+        if (GetDownloadTask(taskId) is { } task)
+        {
+            for (var i = 0; i < task.Siblings.Count; i++)
+            {
+                if (task.Siblings[i].ParallelId == parallelId)
+                    return task.Siblings[i];
+            }
+        }
+
+        return null;
+    }
+
     public async Task<ContentDialogResult> ContentDialogShowAsync(ContentDialog dialog)
     {
         var dialogResult = await dialog.ShowAsync();
         return dialogResult;
     }
-    
+
     private double _progressValue = 0;
 
     public double ProgressValue
@@ -105,6 +143,7 @@ public class MainWindowViewModel : ViewModelBase
     }
 
     #region 检查文件窗口是否打开
+
     private bool _isOpen;
 
     public bool IsOpen
@@ -112,9 +151,11 @@ public class MainWindowViewModel : ViewModelBase
         get => _isOpen;
         set => this.RaiseAndSetIfChanged(ref _isOpen, value);
     }
+
     #endregion
-    
+
     #region 检查需要下载的文件
+
     private ObservableCollection<CheckFileResult> _checkFiles = new();
 
     public ObservableCollection<CheckFileResult> CheckFiles
@@ -122,9 +163,11 @@ public class MainWindowViewModel : ViewModelBase
         get => _checkFiles;
         set => this.RaiseAndSetIfChanged(ref _checkFiles, value);
     }
+
     #endregion
-    
+
     #region 下载文件
+
     private ObservableCollection<DownloadTask> _tasks = new();
 
     public ObservableCollection<DownloadTask> Tasks
@@ -132,9 +175,11 @@ public class MainWindowViewModel : ViewModelBase
         get => _tasks;
         set => this.RaiseAndSetIfChanged(ref _tasks, value);
     }
+
     #endregion
 
     #region 检查文件窗口中是否显示加载
+
     private bool _isVisibleInCheckFile;
 
     public bool IsVisibleInCheckFile
@@ -142,8 +187,9 @@ public class MainWindowViewModel : ViewModelBase
         get => _isVisibleInCheckFile;
         set => this.RaiseAndSetIfChanged(ref _isVisibleInCheckFile, value);
     }
+
     #endregion
-    
+
     private string _speedValue = "0 MB/s";
 
     public string SpeedValue
@@ -154,6 +200,7 @@ public class MainWindowViewModel : ViewModelBase
 
     public ReactiveCommand<string, Unit> ShowAddUrlCommand =>
         ReactiveCommand.CreateFromTask<string>(ShowAddUrlAsync);
+
     public ReactiveCommand<Unit, Unit> DownloadAllCommand =>
         ReactiveCommand.CreateFromTask(DownloadAllFileAsync);
 
@@ -165,7 +212,7 @@ public class MainWindowViewModel : ViewModelBase
             var taskId = await App.Downloader.Download("cow", checkFile);
         }
     }
-    
+
     private async Task ShowAddUrlAsync(string label)
     {
         var text = new TextBox()
@@ -198,10 +245,11 @@ public class MainWindowViewModel : ViewModelBase
         };
         await ContentDialogShowAsync(dialog);
     }
+
     private async Task CheckFilesInit(string id, CheckUrlResult result)
     {
         CheckFiles.Clear();
-        foreach (var fcr in await App.Downloader.CheckFile(id,result))
+        foreach (var fcr in await App.Downloader.CheckFile(id, result))
         {
             IsVisibleInCheckFile = false;
             CheckFiles.Add(fcr);

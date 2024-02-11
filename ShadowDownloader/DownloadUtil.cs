@@ -97,7 +97,7 @@ public class DownloadUtil
         Configuration config,
         Uri? referer,object sender, CancellationToken token)
     {
-        var taskId = config.TaskId++;
+        var taskId = ++config.TaskId;
         await config.SaveAsync();
         var filePath = Path.Combine(savePath, name + ".tmp");
         var status = new DownloadStatusArg(taskId, DownloadStatus.Pending, name, length);

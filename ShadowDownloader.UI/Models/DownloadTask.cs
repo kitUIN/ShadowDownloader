@@ -2,19 +2,21 @@
 using System.Diagnostics;
 using System.Threading.Tasks;
 using ReactiveUI;
+using ShadowDownloader.Enum;
 using SqlSugar;
 
 namespace ShadowDownloader.UI.Models;
 
 public class DownloadTask: ReactiveObject
 {
-    private int _id;
+    private int _taskId;
     
-    public int Id
+    public int TaskId
     {
-        get => _id;
-        set => this.RaiseAndSetIfChanged(ref _id, value);
+        get => _taskId;
+        set => this.RaiseAndSetIfChanged(ref _taskId, value);
     }
+    
     private string _name = "";
     
     public string Name
@@ -53,6 +55,13 @@ public class DownloadTask: ReactiveObject
         get => _received;
         set => this.RaiseAndSetIfChanged(ref _received, value);
     }
+    private DownloadStatus _status = DownloadStatus.Pending;
+    
+    public DownloadStatus Status
+    {
+        get => _status;
+        set => this.RaiseAndSetIfChanged(ref _status, value);
+    }
     private long _speed;
     
     public long Speed
@@ -64,23 +73,23 @@ public class DownloadTask: ReactiveObject
             RemainTime = (Size - Received) / _speed;
         }
     }
-    private ObservableCollection<DownloadTask> _siblings = new();
+    private ObservableCollection<ParallelDownloadTask> _siblings = new();
 
-    public ObservableCollection<DownloadTask> Siblings
+    public ObservableCollection<ParallelDownloadTask> Siblings
     {
         get => _siblings;
         set => this.RaiseAndSetIfChanged(ref _siblings, value);
     }
 
-    public DownloadTask(int id, string name, long size)
+    public DownloadTask(int taskId, string name, long size)
     {
-        Id = id;
+        TaskId = taskId;
         Name = name;
         Size = size;
         Parallel = 0;
     }
-
-    public void Append(DownloadTask task)
+    
+    public void Append(ParallelDownloadTask task)
     {
         Siblings.Add(task);
         Parallel = Siblings.Count > 0 ? Siblings.Count : 1;
@@ -90,12 +99,13 @@ public class DownloadTask: ReactiveObject
     {
         await DbClient.Db.Storageable(new DbDownloadTask
         {
-            Id = Id,
+            TaskId = TaskId,
             Name = Name,
             Parallel = Parallel,
             Percent = Percent,
             Received = Received,
             Size = Size,
+            Status = Status,
         }).ExecuteCommandAsync();
     }
 }

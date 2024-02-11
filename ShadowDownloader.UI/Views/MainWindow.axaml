@@ -150,11 +150,11 @@
                             </Expander.Header>
                             <ListBox ItemsSource="{Binding Siblings}">
                                 <ListBox.ItemTemplate>
-                                    <DataTemplate x:DataType="models:DownloadTask">
+                                    <DataTemplate x:DataType="models:ParallelDownloadTask">
                                         <Grid ColumnDefinitions="Auto,*,Auto">
                                             <TextBlock
                                                 Grid.Column="0"
-                                                Text="{Binding Id, Converter={StaticResource ParallelConverter}}"
+                                                Text="{Binding ParallelId, Converter={StaticResource ParallelConverter}}"
                                                 VerticalAlignment="Center" />
                                             <StackPanel
                                                 Grid.Column="2"

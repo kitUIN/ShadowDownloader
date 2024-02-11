@@ -14,7 +14,7 @@ public partial class App : Application
     {
         AvaloniaXamlLoader.Load(this);
         Log.Logger = new LoggerConfiguration()
-            .WriteTo.File("log-.txt", rollingInterval: RollingInterval.Day)
+            .WriteTo.File("logs/log-.log", rollingInterval: RollingInterval.Day)
             .CreateLogger();
     }
 
@@ -22,6 +22,7 @@ public partial class App : Application
     {
         DbClient.InitDb();
         DbClient.Db.CodeFirst.InitTables<DbDownloadTask>();
+        DbClient.Db.CodeFirst.InitTables<DbParallelDownloadTask>();
     }
     public static ShadowDownloader Downloader { get; }= new ();
     public override void OnFrameworkInitializationCompleted()
