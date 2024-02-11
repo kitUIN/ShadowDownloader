@@ -83,13 +83,17 @@ public class DownloadTask : ReactiveObject
         set => this.RaiseAndSetIfChanged(ref _siblings, value);
     }
 
-    public DownloadTask(int taskId, string name, long size, int parallel = 0, CancellationTokenSource? source = null)
+    public string AdapterId { get; }
+
+    public DownloadTask(int taskId, string name, long size, int parallel = 0, CancellationTokenSource? source = null,
+        string adapterId = "")
     {
         TaskId = taskId;
         Name = name;
         Size = size;
         Parallel = parallel;
         CancellationTokenSource = source;
+        AdapterId = adapterId;
     }
 
     public ReactiveCommand<Unit, Unit> StatusCommand =>

@@ -23,21 +23,21 @@ public partial class MainWindowViewModel : ViewModelBase
     public ReactiveCommand<string, Unit> ShowAddUrlCommand =>
         ReactiveCommand.CreateFromTask<string>(ShowAddUrlAsync);
 
-    public ReactiveCommand<Unit, Unit> DownloadAllCommand =>
-        ReactiveCommand.CreateFromTask(DownloadAllFileAsync);
+    public ReactiveCommand<string, Unit> DownloadAllCommand =>
+        ReactiveCommand.CreateFromTask<string>(DownloadAllFileAsync);
 
-    private async Task DownloadAllFileAsync()
+    private async Task DownloadAllFileAsync(string id)
     {
         IsOpenInCheckFile = false;
         foreach (var checkFile in CheckFiles)
         {
-            var taskRecord = await App.Downloader.Download("cow", checkFile);
-            InitTask(taskRecord);
+            var taskRecord = await App.Downloader.Download(id, checkFile);
+            InitTask(taskRecord, id);
             taskRecord.ScheduleTasks.StartAll();
         }
     }
 
-    private async Task ShowAddUrlAsync(string label)
+    private async Task ShowAddUrlAsync(string id)
     {
         var text = new TextBox()
         {
@@ -48,7 +48,7 @@ public partial class MainWindowViewModel : ViewModelBase
         };
         var dialog = new ContentDialog
         {
-            Title = label,
+            Title = id,
             PrimaryButtonText = "确定",
             DefaultButton = ContentDialogButton.Primary,
             IsPrimaryButtonEnabled = true,
@@ -59,12 +59,12 @@ public partial class MainWindowViewModel : ViewModelBase
         dialog.PrimaryButtonClick += async (sender, args) =>
         {
             if (sender.Content is not TextBox { Text: { } url }) return;
-            var res = App.Downloader.CheckUrl("cow", url);
+            var res = App.Downloader.CheckUrl(id, url);
             if (res.Success)
             {
                 IsOpenInCheckFile = true;
                 IsVisibleInCheckFile = true;
-                await CheckFilesInit("cow", res);
+                await CheckFilesInit(id, res);
             }
         };
         await ContentDialogShowAsync(dialog);
@@ -74,10 +74,10 @@ public partial class MainWindowViewModel : ViewModelBase
     /// 初始化下载任务
     /// </summary>
     /// <param name="taskRecord"></param>
-    private void InitTask(DownloadUtil.DownloadTaskRecord taskRecord)
+    private void InitTask(DownloadUtil.DownloadTaskRecord taskRecord, string adapterId)
     {
         var task = new DownloadTask(taskRecord.TaskId, taskRecord.Name, taskRecord.Size, taskRecord.Parallel,
-            taskRecord.TokenSource);
+            taskRecord.TokenSource, adapterId);
         Tasks.Insert(0, task);
         Log.Information("[Task {TaskId}| Parallel 000]添加下载任务: {Name}, Size:{Size}B", task.TaskId, task.Name, task.Size);
         for (var i = 0; i < taskRecord.ParallelSizeList.Count; i++)
