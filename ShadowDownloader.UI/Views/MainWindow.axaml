@@ -10,6 +10,7 @@
     x:Class="ShadowDownloader.UI.Views.MainWindow"
     x:DataType="vm:MainWindowViewModel"
     xmlns="https://github.com/avaloniaui"
+    xmlns:converter="clr-namespace:ShadowDownloader.UI.Converter"
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:icon="using:FluentAvalonia.FluentIcons"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
@@ -20,6 +21,7 @@
     xmlns:vm="using:ShadowDownloader.UI.ViewModels"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
     <Window.Resources>
+        <converter:PercentConverter x:Key="percentConverter" />
 
         <DataTemplate x:DataType="model:CheckFileResult" x:Key="CheckFileTemplate">
             <Grid Margin="5">
@@ -124,9 +126,10 @@
                                         </ui:HyperlinkButton>
                                     </StackPanel>
                                     <StackPanel
-                                        Grid.Column="6"
+                                        Grid.Column="4"
                                         Orientation="Horizontal"
-                                        Spacing="4">
+                                        Spacing="4"
+                                        VerticalAlignment="Center">
                                         <StackPanel VerticalAlignment="Center">
                                             <Grid ColumnDefinitions="Auto,*,Auto,*,Auto">
                                                 <TextBlock Grid.Column="0" Text="{Binding Speed}" />
@@ -139,16 +142,11 @@
                                                 Value="{Binding Percent}"
                                                 Width="200" />
                                         </StackPanel>
-                                        <StackPanel
-                                            Orientation="Horizontal"
+                                        <TextBlock
+                                            Text="{Binding Percent, Converter={StaticResource percentConverter}}"
                                             VerticalAlignment="Center"
-                                            Width="40">
-                                            <TextBlock Text="{Binding Percent}" />
-                                            <TextBlock Text="%" />
-                                        </StackPanel>
+                                            Width="40" />
                                     </StackPanel>
-
-
                                 </Grid>
                             </Expander.Header>
                             <ListBox ItemsSource="{Binding Siblings}">
@@ -170,10 +168,7 @@
                                                     Minimum="0"
                                                     Value="{Binding Percent}"
                                                     Width="100" />
-                                                <StackPanel Orientation="Horizontal" Width="40">
-                                                    <TextBlock Text="{Binding Percent}" />
-                                                    <TextBlock Text="%" />
-                                                </StackPanel>
+                                                <TextBlock Text="{Binding Percent, Converter={StaticResource percentConverter}}" Width="40" />
                                             </StackPanel>
                                         </Grid>
                                     </DataTemplate>
