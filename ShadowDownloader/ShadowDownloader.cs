@@ -1,9 +1,4 @@
-﻿using System.Diagnostics;
-using System.Net.Http.Headers;
-using Serilog;
-using ShadowDownloader.Adapter;
-using ShadowDownloader.Arg;
-using ShadowDownloader.Enum;
+﻿using ShadowDownloader.Adapter;
 using ShadowDownloader.Model;
 
 namespace ShadowDownloader;
@@ -12,6 +7,7 @@ public class ShadowDownloader
 {
     public Configuration Config { get; }
     public List<IAdapter> Adapters { get; } = new();
+
     public ShadowDownloader(Configuration configuration)
     {
         Config = configuration;
@@ -39,21 +35,22 @@ public class ShadowDownloader
 
         return adapter;
     }
-    public CheckUrlResult CheckUrl(string id,string url)
+
+    public CheckUrlResult CheckUrl(string id, string url)
     {
         var adapter = GetAdapter(id);
         return adapter.CheckUrl(url);
     }
 
-    public async Task<List<CheckFileResult>> CheckFile(string id,CheckUrlResult result)
+    public async Task<List<CheckFileResult>> CheckFile(string id, CheckUrlResult result)
     {
         var adapter = GetAdapter(id);
-        return await adapter.CheckFile(result,Config.SavePath);
+        return await adapter.CheckFile(result, Config.SavePath);
     }
 
-    public async Task<int> Download(string id, CheckFileResult result)
+    public async Task<DownloadUtil.DownloadTaskRecord> Download(string id, CheckFileResult result)
     {
         var adapter = GetAdapter(id);
-        return await adapter.Download(result,Config);
+        return await adapter.Download(result, Config);
     }
 }

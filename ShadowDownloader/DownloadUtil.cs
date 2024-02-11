@@ -34,6 +34,7 @@ public class DownloadUtil
     /// 下载速度更新事件
     /// </summary>
     public static event EventHandler<DownloadSpeedArg> DownloadSpeedChanged;
+
     public static HttpClient Client { get; set; } = new();
 
     public static void SetProxy(Uri uri)
@@ -93,15 +94,18 @@ public class DownloadUtil
         var accept = response.Headers.GetValues("Accept-Ranges").FirstOrDefault();
         return new CheckParallelResult(accept == "bytes", response.Content.Headers.ContentLength);
     }
-    public static async Task<int> DownloadWithParallel(string link, long length,string name, string savePath,
+
+    public static async Task<DownloadTaskRecord> DownloadWithParallel(string link, long length, string name,
+        string savePath,
         Configuration config,
-        Uri? referer,object sender, CancellationToken token)
+        Uri? referer, object sender)
     {
+        var source = new CancellationTokenSource();
         var taskId = ++config.TaskId;
         await config.SaveAsync();
         var filePath = Path.Combine(savePath, name + ".tmp");
         var status = new DownloadStatusArg(taskId, DownloadStatus.Pending, name, length);
-        DownloadStatusChanged?.Invoke(sender,status);
+        DownloadStatusChanged?.Invoke(sender, status);
         var tasks = new List<Task>();
         var parallel = config.Parallel; // 线程数
         var block = length % parallel == 0 ? length / parallel : length / parallel + 1;
@@ -111,6 +115,7 @@ public class DownloadUtil
             parallel = (int)(length / block);
             if (length % block != 0) parallel++;
         }
+
         var downloadNow = 0L; // 当前下载已接收
         for (var i = 0; i < parallel; i++)
         {
@@ -120,46 +125,48 @@ public class DownloadUtil
             {
                 end = length;
             }
+
             var parallelId = i + 1;
             var parallelSize = end - start;
             var parallelNow = 0L;
             var parallelStatus =
                 new ParallelDownloadStatusArg(taskId, parallelId, DownloadStatus.Pending, name, parallelSize);
-            ParallelDownloadStatusChanged?.Invoke(sender,parallelStatus);
+            ParallelDownloadStatusChanged?.Invoke(sender, parallelStatus);
             tasks.Add(Task.Run(async () =>
             {
                 try
                 {
                     parallelStatus.SetStatus(DownloadStatus.Running);
-                    ParallelDownloadStatusChanged?.Invoke(sender,parallelStatus);
+                    ParallelDownloadStatusChanged?.Invoke(sender, parallelStatus);
                     var res = await ParallelGet(link, new RangeHeaderValue(start, end), referer);
-                    await using var stream = await res.Content.ReadAsStreamAsync(token);
+                    await using var stream = await res.Content.ReadAsStreamAsync(source.Token);
                     await using var fs = new FileStream(filePath, FileMode.OpenOrCreate,
                         FileAccess.Write, FileShare.Write);
                     var buffer = new byte[1024 * 128]; // 每128K汇报一次
                     int bytesRead;
                     fs.Seek(start, SeekOrigin.Begin);
-                    while ((bytesRead = await stream.ReadAsync(buffer.AsMemory(0, buffer.Length), token)) > 0)
+                    while ((bytesRead = await stream.ReadAsync(buffer.AsMemory(0, buffer.Length), source.Token)) > 0)
                     {
-                        await fs.WriteAsync(buffer.AsMemory(0, bytesRead), token);
+                        await fs.WriteAsync(buffer.AsMemory(0, bytesRead), source.Token);
                         downloadNow += bytesRead;
                         parallelNow += bytesRead;
-                        ParallelDownloadProcessChanged?.Invoke(sender, 
+                        ParallelDownloadProcessChanged?.Invoke(sender,
                             new ParallelDownloadProcessArg(taskId, parallelId, parallelSize, parallelNow));
                         DownloadProcessChanged?.Invoke(sender,
                             new DownloadProcessArg(taskId, length, downloadNow));
                     }
+
                     parallelStatus.SetStatus(DownloadStatus.Completed);
-                    ParallelDownloadStatusChanged?.Invoke(sender,parallelStatus);
+                    ParallelDownloadStatusChanged?.Invoke(sender, parallelStatus);
                 }
                 catch (Exception ex)
                 {
                     Log.Error("{E}", ex);
                     Trace.WriteLine(ex);
                     parallelStatus.SetStatus(DownloadStatus.Error);
-                    ParallelDownloadStatusChanged?.Invoke(sender,parallelStatus);
+                    ParallelDownloadStatusChanged?.Invoke(sender, parallelStatus);
                 }
-            }, token));
+            }, source.Token));
         }
 
         tasks.Add(Task.Run(async () =>
@@ -167,25 +174,21 @@ public class DownloadUtil
             var last = downloadNow;
             while (last < length)
             {
-                await Task.Delay(1000, token);
+                await Task.Delay(1000, source.Token);
                 var speed = (downloadNow - last);
                 DownloadSpeedChanged?.Invoke(sender, new DownloadSpeedArg(taskId, speed));
                 last = downloadNow;
             }
 
-            if (last >= length)
-            {
-                status.SetStatus(DownloadStatus.Completed);
-                DownloadStatusChanged?.Invoke(sender, status);
-                Trace.WriteLine("完成!");
-            }
-            
-        }, token));
+            status.SetStatus(DownloadStatus.Completed);
+            DownloadStatusChanged?.Invoke(sender, status);
+        }, source.Token));
         status.SetStatus(DownloadStatus.Running);
         DownloadStatusChanged?.Invoke(sender, status);
         await Task.WhenAll(tasks.ToArray());
-        return taskId;
+        return new DownloadTaskRecord(taskId, parallel, name, length, source);
     }
+
     /**
      *  将下载速度转换为易读的格式
      *  @param speed 下载速度（字节/秒）
@@ -212,6 +215,7 @@ public class DownloadUtil
         temp = Math.Round(temp / 1024.0, 2);
         return $"{temp} G/s";
     }
+
     public static string ConvertSize(long speed)
     {
         var temp = Math.Round(speed / 1024.0, 2);
@@ -234,6 +238,7 @@ public class DownloadUtil
         temp = Math.Round(temp / 1024.0, 2);
         return $"{temp} G";
     }
+
     public static string ConvertRemainTime(long duration)
     {
         var ts = new TimeSpan(0, 0, Convert.ToInt32(duration));
@@ -247,6 +252,10 @@ public class DownloadUtil
         {
             str = $"00:00:{ts.Seconds:00}";
         }
+
         return str;
     }
+
+    public record DownloadTaskRecord(int TaskId, int Parallel, string Name, long Size,
+        CancellationTokenSource TokenSource);
 }

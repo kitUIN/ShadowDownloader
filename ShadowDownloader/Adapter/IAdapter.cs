@@ -9,8 +9,7 @@ public interface IAdapter
     /// </summary>
     public string GetId();
 
-    
-    
+
     public CheckUrlResult CheckUrl(string url);
 
     /// <summary>
@@ -21,5 +20,5 @@ public interface IAdapter
     /// <returns>列表</returns>
     public Task<List<CheckFileResult>> CheckFile(CheckUrlResult result, string savePath);
 
-    public Task<int> Download(CheckFileResult result, Configuration config);
+    public Task<DownloadUtil.DownloadTaskRecord> Download(CheckFileResult result, Configuration config);
 }

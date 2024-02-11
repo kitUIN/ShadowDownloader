@@ -1,13 +1,7 @@
-﻿using System.Diagnostics;
-using System.Net.Http.Headers;
-using System.Text.RegularExpressions;
+﻿using System.Text.RegularExpressions;
 using System.Web;
 using Newtonsoft.Json;
-using Newtonsoft.Json.Linq;
-using Serilog;
 using ShadowDownloader.Adapter;
-using ShadowDownloader.Arg;
-using ShadowDownloader.Enum;
 using ShadowDownloader.Model;
 using ShadowDownloader.Response;
 using ShadowDownloader.Result;
@@ -131,17 +125,17 @@ public class CowAdapter : IAdapter
                     // var path = $"{f.Name}.tmp";
                     var link = res.Data[0];
                     var resp = await DownloadUtil.CheckParallel(link, Referer);
-                    list.Add(new CheckFileResult(Id,name,link,savePath,resp.CanParallel,resp.Length ?? 0,f));
+                    list.Add(new CheckFileResult(Id, name, link, savePath, resp.CanParallel, resp.Length ?? 0, f));
                 }
             }
         }
+
         return list;
     }
 
-    public async Task<int> Download(CheckFileResult result,Configuration config)
+    public async Task<DownloadUtil.DownloadTaskRecord> Download(CheckFileResult result, Configuration config)
     {
-        var source = new CancellationTokenSource();
-        return await DownloadUtil.DownloadWithParallel(result.Link, result.Size,result.Name ,result.Path, config, CowAdapter.Referer, this,
-            source.Token);
+        return await DownloadUtil.DownloadWithParallel(result.Link, result.Size,
+            result.Name, result.Path, config, Referer, this);
     }
 }
