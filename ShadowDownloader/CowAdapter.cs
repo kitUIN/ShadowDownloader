@@ -5,15 +5,17 @@ using System.Web;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using Serilog;
+using ShadowDownloader.Adapter;
 using ShadowDownloader.Arg;
 using ShadowDownloader.Enum;
+using ShadowDownloader.Model;
 using ShadowDownloader.Response;
 using ShadowDownloader.Result;
 using static System.String;
 
 namespace ShadowDownloader;
 
-public class CowDownloader: BaseDownloader
+public class CowAdapter : IAdapter
 {
     private const string DownloadDetails = "https://cowtransfer.com/core/api/transfer/share?uniqueUrl={0}";
 
@@ -25,37 +27,22 @@ public class CowDownloader: BaseDownloader
 
     private static readonly Regex FileIdPattern = new("[0-9a-f]{14}");
 
-    private static Uri Referer => new("https://cowtransfer.com/");
+    public static Uri Referer => new("https://cowtransfer.com/");
 
     public string? GetId(string url)
     {
         var fMatch = FileIdPattern.Match(url);
         return fMatch.Groups.Count == 0 ? null : fMatch.Groups[0].Value;
     }
-    public async Task Download(string uri)
+
+    public async Task Download(string guid, CowFile cowFile)
     {
-        var fileId = GetId(uri);
-        var (flag, message, guid) = await Fetch(fileId);
-        if (flag)
+        /*if (result is { CanParallel: true, Length: not null })
         {
-            var files = await FetchItems(guid);
-            if (files.CheckCode())
-            {
-                foreach (var f in files.Data.Files)
-                {
-                    var res = await FetchLink(guid, f);
-                    var path = $"{f.FileInfo.Title}.{f.FileInfo.Format}.tmp";
-                    var link = res.Data[0];
-                    var result = await DownloadUtil.CheckParallel(link, Referer);
-                    if (result is { CanParallel: true, Length: not null })
-                    {
-                        var source = new CancellationTokenSource();
-                        await DownloadWithParallel(link, (long)result.Length, path, Config.Parallel, Referer,
-                            source.Token);
-                    }
-                }
-            }
-        }
+            var source = new CancellationTokenSource();
+            await DownloadWithParallel(link, (long)result.Length, path, Config.Parallel, Referer,
+                source.Token);
+        }*/
     }
 
     public async Task GetDownloadDetail(string url)
@@ -65,6 +52,7 @@ public class CowDownloader: BaseDownloader
         {
             return;
         }
+
         var fileId = fMatch.Groups[0].Value;
         var (flag, message, guid) = await Fetch(fileId);
         if (flag)
@@ -103,9 +91,57 @@ public class CowDownloader: BaseDownloader
         return resp;
     }
 
-    
+    public static string Id => "cow";
 
+    /// <summary>
+    /// <inheritdoc/>
+    /// </summary>
+    public string GetId()
+    {
+        return Id;
+    }
 
-    
-    
+    /// <summary>
+    /// <inheritdoc/>
+    /// </summary>
+    public CheckUrlResult CheckUrl(string url)
+    {
+        var fMatch = FileIdPattern.Match(url);
+        return fMatch.Groups.Count == 0
+            ? new CheckUrlResult(Id, false, url, "", "", "无法识别的奶牛快传链接")
+            : new CheckUrlResult(Id, true, url, fMatch.Groups[0].Value);
+    }
+
+    /// <summary>
+    /// <inheritdoc/>
+    /// </summary>
+    public async Task<List<CheckFileResult>> CheckFile(CheckUrlResult result, string savePath)
+    {
+        var list = new List<CheckFileResult>();
+        var (flag, message, guid) = await Fetch(result.Link);
+        if (flag)
+        {
+            var files = await FetchItems(guid);
+            if (files.CheckCode())
+            {
+                foreach (var f in files.Data.Files)
+                {
+                    var res = await FetchLink(guid, f);
+                    var name = $"{f.FileInfo.Title}.{f.FileInfo.Format}";
+                    // var path = $"{f.Name}.tmp";
+                    var link = res.Data[0];
+                    var resp = await DownloadUtil.CheckParallel(link, Referer);
+                    list.Add(new CheckFileResult(Id,name,link,savePath,resp.CanParallel,resp.Length ?? 0,f));
+                }
+            }
+        }
+        return list;
+    }
+
+    public async Task<int> Download(CheckFileResult result,Configuration config)
+    {
+        var source = new CancellationTokenSource();
+        return await DownloadUtil.DownloadWithParallel(result.Link, result.Size,result.Name ,result.Path, config, CowAdapter.Referer, this,
+            source.Token);
+    }
 }

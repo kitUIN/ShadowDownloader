@@ -13,17 +13,31 @@
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:icon="using:FluentAvalonia.FluentIcons"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    xmlns:model="clr-namespace:ShadowDownloader.Model;assembly=ShadowDownloader"
     xmlns:models="clr-namespace:ShadowDownloader.UI.Models"
     xmlns:ui="using:FluentAvalonia.UI.Controls"
     xmlns:uip="using:FluentAvalonia.UI.Controls.Primitives"
     xmlns:vm="using:ShadowDownloader.UI.ViewModels"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
     <Window.Resources>
-        <DataTemplate x:DataType="models:CheckFile" x:Key="CheckFileTemplate">
-            <Grid RowDefinitions="*,*">
-                <TextBlock Grid.Row="0" Text="{Binding Name}" />
-                <TextBlock Grid.Row="1" Text="{Binding Size}" />
+
+        <DataTemplate x:DataType="model:CheckFileResult" x:Key="CheckFileTemplate">
+            <Grid Margin="5">
+                <Grid RowDefinitions="*,*">
+                    <TextBlock
+                        FontSize="15"
+                        FontWeight="Bold"
+                        Grid.Row="0"
+                        Text="{Binding Name}" />
+                    <TextBlock
+                        FontSize="13"
+                        Foreground="Gray"
+                        Grid.Row="1"
+                        Text="{Binding SizeString}" />
+                </Grid>
+
             </Grid>
+
         </DataTemplate>
     </Window.Resources>
     <Design.DataContext>
@@ -56,28 +70,133 @@
                 </ui:CommandBar.PrimaryCommands>
 
             </ui:CommandBar>
-            <ProgressBar
+
+            <ListBox
                 Grid.Row="1"
-                Maximum="100"
-                Minimum="0"
-                Value="{Binding ProgressValue}"
-                Width="200" />
-            <TextBlock Grid.Row="1" Text="{Binding SpeedValue}" />
-            <ListBox Grid.Row="1" />
+                ItemsSource="{Binding Tasks}"
+                Margin="0,10,0,0">
+                <ListBox.ItemTemplate>
+                    <DataTemplate x:DataType="models:DownloadTask">
+                        <Expander>
+                            <Expander.Styles>
+                                <Style Selector="Expander ToggleButton">
+                                    <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+                                </Style>
+                            </Expander.Styles>
+                            <Expander.Header>
+                                <Grid ColumnDefinitions="Auto,*,Auto,*,Auto" Margin="0,10">
+                                    <StackPanel
+                                        Grid.Column="0"
+                                        Orientation="Horizontal"
+                                        Spacing="4">
+                                        <icon:FluentIcon Icon="Info16Regular" Width="16" />
+                                        <TextBlock
+                                            FontSize="15"
+                                            FontWeight="Medium"
+                                            MaxWidth="150"
+                                            Text="{Binding Name}"
+                                            TextTrimming="CharacterEllipsis"
+                                            ToolTip.Tip="{Binding Name}"
+                                            VerticalAlignment="Center" />
+                                        <ui:InfoBadge ToolTip.Tip="5线程" Value="{Binding Parallel}" />
+                                    </StackPanel>
+                                    <StackPanel
+                                        Grid.Column="2"
+                                        Margin="4,0"
+                                        Orientation="Horizontal">
+                                        <ui:HyperlinkButton IsEnabled="True">
+                                            <icon:FluentIcon
+                                                Height="16"
+                                                Icon="PlayCircle24Regular"
+                                                Width="16" />
+                                        </ui:HyperlinkButton>
+                                        <ui:HyperlinkButton IsEnabled="True">
+                                            <icon:FluentIcon
+                                                Height="16"
+                                                Icon="DismissCircle24Regular"
+                                                Width="16" />
+                                        </ui:HyperlinkButton>
+                                    </StackPanel>
+                                    <Grid
+                                        Grid.Column="4"
+                                        RowDefinitions="Auto,Auto"
+                                        VerticalAlignment="Center">
+                                        <Grid ColumnDefinitions="Auto,*,Auto,*,Auto" Grid.Row="0">
+                                            <TextBlock Grid.Column="0" Text="{Binding Speed}" />
+                                            <Grid
+                                                ColumnDefinitions="Auto,Auto,Auto"
+                                                Grid.Column="2"
+                                                VerticalAlignment="Center">
+                                                <TextBlock Text="{Binding Received}" />
+                                                <TextBlock
+                                                    Grid.Column="1"
+                                                    Margin="2,0"
+                                                    Text="/" />
+                                                <TextBlock Grid.Column="2" Text="{Binding SizeString}" />
+                                            </Grid>
+                                            <TextBlock Grid.Column="4" Text="00:00:00" />
+                                        </Grid>
+
+                                        <ProgressBar
+                                            Grid.Row="1"
+                                            Maximum="100"
+                                            Minimum="0"
+                                            Value="{Binding Percent}"
+                                            Width="250" />
+
+                                    </Grid>
+                                </Grid>
+                            </Expander.Header>
+                            <ListBox ItemsSource="{Binding Siblings}">
+                                <ListBox.ItemTemplate>
+                                    <DataTemplate x:DataType="models:DownloadTask">
+                                        <Grid ColumnDefinitions="Auto,*,Auto">
+                                            <TextBlock Text="{Binding Id}" VerticalAlignment="Center" />
+                                            <StackPanel
+                                                Grid.Column="2"
+                                                Orientation="Horizontal"
+                                                Spacing="10"
+                                                VerticalAlignment="Center">
+                                                <ProgressBar
+                                                    Maximum="100"
+                                                    Minimum="0"
+                                                    Value="{Binding Percent}"
+                                                    Width="100" />
+                                                <StackPanel Orientation="Horizontal">
+                                                    <TextBlock Text="{Binding Percent}" />
+                                                    <TextBlock Text="%" />
+                                                </StackPanel>
+                                            </StackPanel>
+                                        </Grid>
+                                    </DataTemplate>
+                                </ListBox.ItemTemplate>
+                            </ListBox>
+                        </Expander>
+                    </DataTemplate>
+                </ListBox.ItemTemplate>
+                <ListBox.Styles>
+                    <Style Selector="ListBoxItem:pointerover">
+                        <Setter Property="Foreground" Value="Transparent" />
+                    </Style>
+                </ListBox.Styles>
+            </ListBox>
 
         </Grid>
+
         <ui:TeachingTip
             HeroContentPlacement="Bottom"
-            IsOpen="{Binding IsOpen}"
+            IsOpen="{Binding IsOpen, Mode=TwoWay}"
             PreferredPlacement="Center"
             Title="选择需要下载的文件">
             <ui:TeachingTip.HeroContent>
-
                 <Grid
-                    ColumnDefinitions="*,Auto,5,Auto"
+                    ColumnDefinitions="*,Auto,5,Auto,5,Auto"
                     Grid.Row="1"
                     Margin="10">
-                    <Button Content="全部下载" Grid.Column="1">
+                    <Button
+                        Command="{Binding DownloadAllCommand}"
+                        Content="全部下载"
+                        Grid.Column="1">
                         <Button.Styles>
                             <Style Selector="Button">
                                 <Style Selector="^:pointerover">
@@ -89,7 +208,8 @@
                             </Style>
                         </Button.Styles>
                     </Button>
-                    <Button Content="取消" Grid.Column="3" />
+                    <Button Content="下载选中的文件" Grid.Column="3" />
+                    <Button Content="取消" Grid.Column="5" />
                 </Grid>
             </ui:TeachingTip.HeroContent>
             <ui:TeachingTip.Content>

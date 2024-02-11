@@ -10,7 +10,8 @@ public class ParallelDownloadStatusArg : DownloadStatusArg
     public int ParallelId { get; }
 
 
-    public ParallelDownloadStatusArg(int taskId, int parallelId, DownloadStatus status) : base(taskId, status)
+    public ParallelDownloadStatusArg(int taskId, int parallelId, DownloadStatus status, 
+        string name, long size) : base(taskId, status,name,size)
     {
         ParallelId = parallelId;
     }

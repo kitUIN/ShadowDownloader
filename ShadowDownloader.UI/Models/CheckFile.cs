@@ -26,12 +26,31 @@ public class CheckFile: ReactiveObject
         get => _size;
         set => this.RaiseAndSetIfChanged(ref _size, value);
     }
+    /*private string _guid="";
+    
+    public string Guid
+    {
+        get => _guid;
+        set => this.RaiseAndSetIfChanged(ref _guid, value);
+    }*/
+    private bool _canParallel;
+    
+    public bool CanParallel
+    {
+        get => _canParallel;
+        set => this.RaiseAndSetIfChanged(ref _canParallel, value);
+    }
     public CowFile File { get; }
-    public CheckFile(CowFile f)
+    public string Link { get; }
+    public CheckFile(CowFile f, bool canParallel,string link)
     {
         Format = f.FileInfo.Format;
         Name = $"{f.FileInfo.Title}.{f.FileInfo.Format}";
         Size = DownloadUtil.ConvertSize(f.FileInfo.Size);
         File = f;
+        CanParallel = canParallel;
+        Link = link;
     }
+
+ 
 }

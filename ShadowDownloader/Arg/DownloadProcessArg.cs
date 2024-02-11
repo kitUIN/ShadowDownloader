@@ -1,4 +1,6 @@
-﻿namespace ShadowDownloader.Arg;
+﻿using System.Diagnostics;
+
+namespace ShadowDownloader.Arg;
 
 public class DownloadProcessArg
 {
@@ -15,7 +17,7 @@ public class DownloadProcessArg
     /**
      * 进度:百分比,保留2位小数
      */
-    public double Process { get; }
+    public double Progress { get; }
 
     /**
      * 当前总共已接收
@@ -27,6 +29,6 @@ public class DownloadProcessArg
         TaskId = taskId;
         Total = total;
         Received = received;
-        Process = Math.Round(received / (double)total * 100, 2);
+        Progress = Math.Round((received / (double)total * 100), 2);
     }
 }

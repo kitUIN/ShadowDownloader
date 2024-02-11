@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.ObjectModel;
 using System.Diagnostics;
+using System.Linq;
 using System.Reactive;
 using System.Reactive.Linq;
 using System.Threading.Tasks;
@@ -9,6 +10,9 @@ using Avalonia.Controls;
 using Avalonia.Media;
 using FluentAvalonia.UI.Controls;
 using ReactiveUI;
+using ShadowDownloader.Arg;
+using ShadowDownloader.Enum;
+using ShadowDownloader.Model;
 using ShadowDownloader.UI.Models;
 using ShadowDownloader.UI.Views;
 
@@ -16,8 +20,76 @@ namespace ShadowDownloader.UI.ViewModels;
 
 public class MainWindowViewModel : ViewModelBase
 {
-    public static CowDownloader Downloader = new();
+    public MainWindowViewModel()
+    {
+        DownloadUtil.DownloadStatusChanged += DownloadUtilOnDownloadStatusChanged;
+        DownloadUtil.ParallelDownloadStatusChanged += DownloadUtilOnParallelDownloadStatusChanged;
+        DownloadUtil.DownloadProcessChanged += DownloadUtilOnDownloadProcessChanged;
+        DownloadUtil.DownloadSpeedChanged += DownloadUtilOnDownloadSpeedChanged;
+        DownloadUtil.ParallelDownloadProcessChanged += DownloadUtilOnParallelDownloadProcessChanged;
+    }
 
+    private void DownloadUtilOnParallelDownloadProcessChanged(object? sender, ParallelDownloadProcessArg e)
+    {
+        if (GetDownloadTask(e.TaskId) is { } task)
+        {
+            if (task.Siblings.FirstOrDefault(x => x.Id == e.ParallelId) is { } pTask)
+            {
+                pTask.Percent = e.Progress;
+            }
+        }
+    }
+
+    private void DownloadUtilOnDownloadSpeedChanged(object? sender, DownloadSpeedArg e)
+    {
+        if (GetDownloadTask(e.TaskId) is { } task)
+        {
+            task.Speed = e.SpeedShow;
+        }
+    }
+
+    private void DownloadUtilOnDownloadProcessChanged(object? sender, DownloadProcessArg e)
+    {
+        if (GetDownloadTask(e.TaskId) is { } task)
+        {
+            task.Percent = e.Progress;
+            task.Received = DownloadUtil.ConvertSize(e.Received);
+        }
+    }
+
+    private void DownloadUtilOnParallelDownloadStatusChanged(object? sender, ParallelDownloadStatusArg e)
+    {
+        if (e.Status == DownloadStatus.Pending)
+        {
+            if (GetDownloadTask(e.TaskId) is { } task)
+            {
+                task.Append(new DownloadTask(e.ParallelId,e.Name,e.Size));
+                
+            }
+        }
+    }
+
+
+    private async void DownloadUtilOnDownloadStatusChanged(object? sender, DownloadStatusArg e)
+    {
+        if (e.Status == DownloadStatus.Pending)
+        {
+            var task = new DownloadTask(e.TaskId, e.Name, e.Size);
+            Tasks.Add(task);
+            await task.SaveDbAsync();
+        }
+        else if(e.Status == DownloadStatus.Completed)
+        {
+            if (GetDownloadTask(e.TaskId) is { } task)
+            {
+                await task.SaveDbAsync();
+            }
+        }
+    }
+    private DownloadTask? GetDownloadTask(int taskId)
+    {
+        return Tasks.FirstOrDefault(x => x.Id == taskId);
+    }
     public async Task<ContentDialogResult> ContentDialogShowAsync(ContentDialog dialog)
     {
         var dialogResult = await dialog.ShowAsync();
@@ -43,12 +115,22 @@ public class MainWindowViewModel : ViewModelBase
     #endregion
     
     #region 检查需要下载的文件
-    private ObservableCollection<CheckFile> _checkFiles = new();
+    private ObservableCollection<CheckFileResult> _checkFiles = new();
 
-    public ObservableCollection<CheckFile> CheckFiles
+    public ObservableCollection<CheckFileResult> CheckFiles
     {
         get => _checkFiles;
         set => this.RaiseAndSetIfChanged(ref _checkFiles, value);
+    }
+    #endregion
+    
+    #region 下载文件
+    private ObservableCollection<DownloadTask> _tasks = new();
+
+    public ObservableCollection<DownloadTask> Tasks
+    {
+        get => _tasks;
+        set => this.RaiseAndSetIfChanged(ref _tasks, value);
     }
     #endregion
 
@@ -72,7 +154,18 @@ public class MainWindowViewModel : ViewModelBase
 
     public ReactiveCommand<string, Unit> ShowAddUrlCommand =>
         ReactiveCommand.CreateFromTask<string>(ShowAddUrlAsync);
+    public ReactiveCommand<Unit, Unit> DownloadAllCommand =>
+        ReactiveCommand.CreateFromTask(DownloadAllFileAsync);
 
+    public async Task DownloadAllFileAsync()
+    {
+        IsOpen = false;
+        foreach (var checkFile in CheckFiles)
+        {
+            var taskId = await App.Downloader.Download("cow", checkFile);
+        }
+    }
+    
     private async Task ShowAddUrlAsync(string label)
     {
         var text = new TextBox()
@@ -95,31 +188,23 @@ public class MainWindowViewModel : ViewModelBase
         dialog.PrimaryButtonClick += async (sender, args) =>
         {
             if (sender.Content is not TextBox { Text: string url }) return;
-            var id = App.Downloader.GetId(url);
-            if (id != null)
+            var res = App.Downloader.CheckUrl("cow", url);
+            if (res.Success)
             {
                 IsOpen = true;
                 IsVisibleInCheckFile = true;
-                await CheckFilesInit(id);
+                await CheckFilesInit("cow", res);
             }
         };
         await ContentDialogShowAsync(dialog);
     }
-    private async Task CheckFilesInit(string id)
+    private async Task CheckFilesInit(string id, CheckUrlResult result)
     {
         CheckFiles.Clear();
-        var (flag, message, guid) = await App.Downloader.Fetch(id);
-        if (flag)
+        foreach (var fcr in await App.Downloader.CheckFile(id,result))
         {
-            var files = await App.Downloader.FetchItems(guid);
-            if (files.CheckCode())
-            {
-                foreach (var f in files.Data.Files)
-                {
-                    IsVisibleInCheckFile = false;
-                    CheckFiles.Add(new CheckFile(f));
-                }
-            }
+            IsVisibleInCheckFile = false;
+            CheckFiles.Add(fcr);
         }
     }
 }
