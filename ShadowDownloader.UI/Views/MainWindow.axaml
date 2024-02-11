@@ -22,10 +22,12 @@
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
     <Window.Resources>
         <converter:PercentConverter x:Key="PercentConverter" />
+
         <converter:ParallelConverter x:Key="ParallelConverter" />
         <converter:SizeConverter x:Key="SizeConverter" />
         <converter:SpeedConverter x:Key="SpeedConverter" />
         <converter:RemainTimeConverter x:Key="RemainTimeConverter" />
+        <converter:ProgressColorConverter x:Key="ProgressColorConverter" />
 
         <DataTemplate x:DataType="model:CheckFileResult" x:Key="CheckFileTemplate">
             <Grid Margin="5">
@@ -135,6 +137,7 @@
                                                 <TextBlock Grid.Column="4" Text="{Binding RemainTime, Converter={StaticResource RemainTimeConverter}}" />
                                             </Grid>
                                             <ProgressBar
+                                                Foreground="{Binding Status, Converter={StaticResource ProgressColorConverter}}"
                                                 Maximum="100"
                                                 Minimum="0"
                                                 Value="{Binding Percent}"

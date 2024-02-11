@@ -1,6 +1,8 @@
+using System.Diagnostics;
 using Avalonia;
 using Avalonia.Controls.ApplicationLifetimes;
 using Avalonia.Markup.Xaml;
+using Avalonia.Styling;
 using Serilog;
 using ShadowDownloader.UI.Models;
 using ShadowDownloader.UI.ViewModels;
@@ -36,7 +38,7 @@ public partial class App : Application
                 DataContext = new MainWindowViewModel(),
             };
         }
-
-        base.OnFrameworkInitializationCompleted();
+        
+        base.OnFrameworkInitializationCompleted(); 
     }
 }
