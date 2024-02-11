@@ -92,15 +92,24 @@ public class DownloadTask : ReactiveObject
         CancellationTokenSource = source;
     }
 
-    public ReactiveCommand<Unit, Unit> CancelCommand =>
-        ReactiveCommand.Create(Cancel);
+    public ReactiveCommand<Unit, Unit> StatusCommand =>
+        ReactiveCommand.Create(CheckStatus);
 
     public ReactiveCommand<Unit, Unit> RemoveCommand =>
-        ReactiveCommand.Create(Cancel);
+        ReactiveCommand.Create(CheckStatus);
 
-    private void Cancel()
+    private void CheckStatus()
     {
-        CancellationTokenSource?.Cancel();
+        if (Status == DownloadStatus.Running) // 正在运行则取消
+        {
+            CancellationTokenSource?.Cancel();
+        }
+        else if (Status == DownloadStatus.Error) // 失败则重试
+        {
+        }
+        else if (Status == DownloadStatus.Pausing) // 暂停则继续
+        {
+        }
     }
 
     private CancellationTokenSource? CancellationTokenSource { get; }

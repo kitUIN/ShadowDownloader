@@ -118,13 +118,13 @@
                                         Grid.Column="2"
                                         Margin="4,0"
                                         Orientation="Horizontal">
-                                        <ui:HyperlinkButton IsEnabled="{Binding Status, Converter={StaticResource TaskPlayEnableConverter}}">
+                                        <ui:HyperlinkButton Command="{Binding StatusCommand}" IsEnabled="{Binding Status, Converter={StaticResource TaskPlayEnableConverter}}">
                                             <icon:FluentIcon
                                                 Height="16"
                                                 Icon="{Binding Status, Converter={StaticResource TaskPlayConverter}}"
                                                 Width="16" />
                                         </ui:HyperlinkButton>
-                                        <ui:HyperlinkButton Command="{Binding CancelCommand}" IsEnabled="{Binding Status, Converter={StaticResource TaskCancelEnableConverter}}">
+                                        <ui:HyperlinkButton IsEnabled="{Binding Status, Converter={StaticResource TaskCancelEnableConverter}}">
                                             <icon:FluentIcon
                                                 Height="16"
                                                 Icon="DismissCircle24Regular"

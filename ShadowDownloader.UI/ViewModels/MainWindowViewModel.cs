@@ -1,5 +1,4 @@
-﻿using System.Collections.Generic;
-using System.Collections.ObjectModel;
+﻿using System.Collections.ObjectModel;
 using System.Linq;
 using System.Reactive;
 using System.Threading.Tasks;
@@ -16,7 +15,7 @@ using ShadowDownloader.UI.Models;
 
 namespace ShadowDownloader.UI.ViewModels;
 
-public class MainWindowViewModel : ViewModelBase
+public partial class MainWindowViewModel : ViewModelBase
 {
     public MainWindowViewModel()
     {
@@ -42,12 +41,11 @@ public class MainWindowViewModel : ViewModelBase
         if (GetDownloadTask(e.TaskId) is { } task)
         {
             task.Speed = e.Speed;
-            var tasks = new List<Task>
+            await task.SaveDbAsync();
+            foreach (var pTask in task.Siblings)
             {
-                Task.Run(async () => await task.SaveDbAsync())
-            };
-            tasks.AddRange(task.Siblings.Select(pTask => Task.Run(async () => await pTask.SaveDbAsync())));
-            await Task.WhenAll(tasks);
+                await pTask.SaveDbAsync();
+            }
         }
     }
 

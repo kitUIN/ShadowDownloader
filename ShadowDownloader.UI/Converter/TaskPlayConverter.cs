@@ -18,7 +18,7 @@ public class TaskPlayConverter : IValueConverter
         {
             DownloadStatus.Error => FluentIconSymbol.ArrowSync24Regular,
             DownloadStatus.Running => FluentIconSymbol.PauseCircle24Regular,
-            _ => FluentIconSymbol.ArrowSync24Regular,
+            _ => FluentIconSymbol.PlayCircle24Regular,
         };
     }
 
