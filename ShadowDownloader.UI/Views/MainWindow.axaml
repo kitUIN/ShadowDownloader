@@ -17,7 +17,6 @@
     xmlns:model="clr-namespace:ShadowDownloader.Model;assembly=ShadowDownloader"
     xmlns:models="clr-namespace:ShadowDownloader.UI.Models"
     xmlns:ui="using:FluentAvalonia.UI.Controls"
-    xmlns:uip="using:FluentAvalonia.UI.Controls.Primitives"
     xmlns:vm="using:ShadowDownloader.UI.ViewModels"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
     <Window.Resources>
@@ -28,6 +27,10 @@
         <converter:SpeedConverter x:Key="SpeedConverter" />
         <converter:RemainTimeConverter x:Key="RemainTimeConverter" />
         <converter:ProgressColorConverter x:Key="ProgressColorConverter" />
+        <converter:TaskStatusConverter x:Key="TaskStatusConverter" />
+        <converter:TaskPlayConverter x:Key="TaskPlayConverter" />
+        <converter:TaskPlayEnableConverter x:Key="TaskPlayEnableConverter" />
+        <converter:TaskCancelEnableConverter x:Key="TaskCancelEnableConverter" />
 
         <DataTemplate x:DataType="model:CheckFileResult" x:Key="CheckFileTemplate">
             <Grid Margin="5">
@@ -97,7 +100,10 @@
                                         Grid.Column="0"
                                         Orientation="Horizontal"
                                         Spacing="4">
-                                        <icon:FluentIcon Icon="Info16Regular" Width="16" />
+                                        <icon:FluentIcon
+                                            Foreground="{Binding Status, Converter={StaticResource ProgressColorConverter}}"
+                                            Icon="{Binding Status, Converter={StaticResource TaskStatusConverter}}"
+                                            Width="16" />
                                         <TextBlock
                                             FontSize="15"
                                             FontWeight="Medium"
@@ -112,13 +118,13 @@
                                         Grid.Column="2"
                                         Margin="4,0"
                                         Orientation="Horizontal">
-                                        <ui:HyperlinkButton IsEnabled="True">
+                                        <ui:HyperlinkButton IsEnabled="{Binding Status, Converter={StaticResource TaskPlayEnableConverter}}">
                                             <icon:FluentIcon
                                                 Height="16"
-                                                Icon="PlayCircle24Regular"
+                                                Icon="{Binding Status, Converter={StaticResource TaskPlayConverter}}"
                                                 Width="16" />
                                         </ui:HyperlinkButton>
-                                        <ui:HyperlinkButton IsEnabled="True">
+                                        <ui:HyperlinkButton IsEnabled="{Binding Status, Converter={StaticResource TaskCancelEnableConverter}}">
                                             <icon:FluentIcon
                                                 Height="16"
                                                 Icon="DismissCircle24Regular"
