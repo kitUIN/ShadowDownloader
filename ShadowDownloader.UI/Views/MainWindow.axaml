@@ -205,7 +205,7 @@
 
         <ui:TeachingTip
             HeroContentPlacement="Bottom"
-            IsOpen="{Binding IsOpen, Mode=TwoWay}"
+            IsOpen="{Binding IsOpenInCheckFile, Mode=TwoWay}"
             PreferredPlacement="Center"
             Title="选择需要下载的文件">
             <ui:TeachingTip.HeroContent>
