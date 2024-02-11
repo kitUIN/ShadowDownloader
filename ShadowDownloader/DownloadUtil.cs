@@ -121,21 +121,22 @@ public class DownloadUtil
                 end = length;
             }
             var parallelId = i + 1;
+            var parallelSize = end - start;
+            var parallelNow = 0L;
             var parallelStatus =
-                new ParallelDownloadStatusArg(taskId, parallelId, DownloadStatus.Pending, name, length);
+                new ParallelDownloadStatusArg(taskId, parallelId, DownloadStatus.Pending, name, parallelSize);
             ParallelDownloadStatusChanged?.Invoke(sender,parallelStatus);
             tasks.Add(Task.Run(async () =>
             {
                 try
                 {
-                    var parallelNow = 0L;
                     parallelStatus.SetStatus(DownloadStatus.Running);
                     ParallelDownloadStatusChanged?.Invoke(sender,parallelStatus);
                     var res = await ParallelGet(link, new RangeHeaderValue(start, end), referer);
                     await using var stream = await res.Content.ReadAsStreamAsync(token);
                     await using var fs = new FileStream(filePath, FileMode.OpenOrCreate,
                         FileAccess.Write, FileShare.Write);
-                    var buffer = new byte[1024 * 256]; // 每256K汇报一次
+                    var buffer = new byte[1024 * 128]; // 每128K汇报一次
                     int bytesRead;
                     fs.Seek(start, SeekOrigin.Begin);
                     while ((bytesRead = await stream.ReadAsync(buffer.AsMemory(0, buffer.Length), token)) > 0)
@@ -143,8 +144,8 @@ public class DownloadUtil
                         await fs.WriteAsync(buffer.AsMemory(0, bytesRead), token);
                         downloadNow += bytesRead;
                         parallelNow += bytesRead;
-                        ParallelDownloadProcessChanged?.Invoke(sender,
-                            new ParallelDownloadProcessArg(taskId, parallelId, end - start, parallelNow));
+                        ParallelDownloadProcessChanged?.Invoke(sender, 
+                            new ParallelDownloadProcessArg(taskId, parallelId, parallelSize, parallelNow));
                         DownloadProcessChanged?.Invoke(sender,
                             new DownloadProcessArg(taskId, length, downloadNow));
                     }

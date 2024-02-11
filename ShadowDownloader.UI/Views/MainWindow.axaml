@@ -98,7 +98,13 @@
                                             TextTrimming="CharacterEllipsis"
                                             ToolTip.Tip="{Binding Name}"
                                             VerticalAlignment="Center" />
-                                        <ui:InfoBadge ToolTip.Tip="5线程" Value="{Binding Parallel}" />
+                                        <ui:InfoBadge Value="{Binding Parallel}">
+                                            <ToolTip.Tip>
+                                                <StackPanel Orientation="Horizontal">
+                                                    <TextBlock Text="{Binding Parallel}" />
+                                                </StackPanel>
+                                            </ToolTip.Tip>
+                                        </ui:InfoBadge>
                                     </StackPanel>
                                     <StackPanel
                                         Grid.Column="2"
@@ -117,52 +123,54 @@
                                                 Width="16" />
                                         </ui:HyperlinkButton>
                                     </StackPanel>
-                                    <Grid
-                                        Grid.Column="4"
-                                        RowDefinitions="Auto,Auto"
-                                        VerticalAlignment="Center">
-                                        <Grid ColumnDefinitions="Auto,*,Auto,*,Auto" Grid.Row="0">
-                                            <TextBlock Grid.Column="0" Text="{Binding Speed}" />
-                                            <Grid
-                                                ColumnDefinitions="Auto,Auto,Auto"
-                                                Grid.Column="2"
-                                                VerticalAlignment="Center">
-                                                <TextBlock Text="{Binding Received}" />
-                                                <TextBlock
-                                                    Grid.Column="1"
-                                                    Margin="2,0"
-                                                    Text="/" />
+                                    <StackPanel
+                                        Grid.Column="6"
+                                        Orientation="Horizontal"
+                                        Spacing="4">
+                                        <StackPanel VerticalAlignment="Center">
+                                            <Grid ColumnDefinitions="Auto,*,Auto,*,Auto">
+                                                <TextBlock Grid.Column="0" Text="{Binding Speed}" />
                                                 <TextBlock Grid.Column="2" Text="{Binding SizeString}" />
+                                                <TextBlock Grid.Column="4" Text="00:00:00" />
                                             </Grid>
-                                            <TextBlock Grid.Column="4" Text="00:00:00" />
-                                        </Grid>
+                                            <ProgressBar
+                                                Maximum="100"
+                                                Minimum="0"
+                                                Value="{Binding Percent}"
+                                                Width="200" />
+                                        </StackPanel>
+                                        <StackPanel
+                                            Orientation="Horizontal"
+                                            VerticalAlignment="Center"
+                                            Width="40">
+                                            <TextBlock Text="{Binding Percent}" />
+                                            <TextBlock Text="%" />
+                                        </StackPanel>
+                                    </StackPanel>
 
-                                        <ProgressBar
-                                            Grid.Row="1"
-                                            Maximum="100"
-                                            Minimum="0"
-                                            Value="{Binding Percent}"
-                                            Width="250" />
 
-                                    </Grid>
                                 </Grid>
                             </Expander.Header>
                             <ListBox ItemsSource="{Binding Siblings}">
                                 <ListBox.ItemTemplate>
                                     <DataTemplate x:DataType="models:DownloadTask">
                                         <Grid ColumnDefinitions="Auto,*,Auto">
-                                            <TextBlock Text="{Binding Id}" VerticalAlignment="Center" />
+                                            <StackPanel Grid.Column="0" Orientation="Horizontal">
+                                                <TextBlock Text="线程" />
+                                                <TextBlock Text="{Binding Id}" VerticalAlignment="Center" />
+                                            </StackPanel>
                                             <StackPanel
                                                 Grid.Column="2"
                                                 Orientation="Horizontal"
                                                 Spacing="10"
                                                 VerticalAlignment="Center">
+                                                <TextBlock Text="{Binding SizeString}" />
                                                 <ProgressBar
                                                     Maximum="100"
                                                     Minimum="0"
                                                     Value="{Binding Percent}"
                                                     Width="100" />
-                                                <StackPanel Orientation="Horizontal">
+                                                <StackPanel Orientation="Horizontal" Width="40">
                                                     <TextBlock Text="{Binding Percent}" />
                                                     <TextBlock Text="%" />
                                                 </StackPanel>
