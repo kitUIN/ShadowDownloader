@@ -1,5 +1,5 @@
 ﻿using ShadowDownloader.Adapter;
-using ShadowDownloader.Exception;
+using ShadowDownloader.Exceptions;
 using ShadowDownloader.Model;
 
 namespace ShadowDownloader;

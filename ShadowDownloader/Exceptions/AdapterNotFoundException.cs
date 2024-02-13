@@ -1,12 +1,12 @@
-﻿namespace ShadowDownloader.Exception;
+﻿namespace ShadowDownloader.Exceptions;
 
-public class AdapterNotFoundException : System.Exception
+public class AdapterNotFoundException : Exception
 {
     public AdapterNotFoundException(string? message) : base(message)
     {
     }
 
-    public AdapterNotFoundException(string? message, System.Exception? innerException) : base(message, innerException)
+    public AdapterNotFoundException(string? message, Exception? innerException) : base(message, innerException)
     {
     }
 }
