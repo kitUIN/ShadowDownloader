@@ -9,7 +9,11 @@ namespace ShadowDownloader.UI.Models;
 
 public class DownloadTask : ReactiveObject
 {
-    public int TaskId { get; }
+    protected DownloadTask()
+    {
+    }
+
+    public int TaskId { get; protected set; }
 
     private string _name = "";
 
@@ -35,7 +39,7 @@ public class DownloadTask : ReactiveObject
         set => this.RaiseAndSetIfChanged(ref _percent, value);
     }
 
-    public long Size { get; }
+    public long Size { get; protected set; }
     private long _remainTime;
 
     public long RemainTime
@@ -83,10 +87,11 @@ public class DownloadTask : ReactiveObject
         set => this.RaiseAndSetIfChanged(ref _siblings, value);
     }
 
-    public string AdapterId { get; }
+    public string AdapterId { get; protected set; } = "";
 
-    public DownloadTask(int taskId, string name, long size, int parallel = 0, CancellationTokenSource? source = null,
-        string adapterId = "")
+    public DownloadTask(int taskId, string name, long size, string adapterId, int parallel = 0,
+        CancellationTokenSource? source = null
+    )
     {
         TaskId = taskId;
         Name = name;
@@ -94,6 +99,20 @@ public class DownloadTask : ReactiveObject
         Parallel = parallel;
         CancellationTokenSource = source;
         AdapterId = adapterId;
+    }
+
+    public DownloadTask(DbDownloadTask dbDownloadTask)
+    {
+        TaskId = dbDownloadTask.TaskId;
+        Name = dbDownloadTask.Name;
+        Size = dbDownloadTask.Size;
+        Parallel = dbDownloadTask.Parallel;
+        Percent = dbDownloadTask.Percent;
+        Received = dbDownloadTask.Received;
+        AdapterId = dbDownloadTask.AdapterId;
+        Status = dbDownloadTask.Status == DownloadStatus.Running ? DownloadStatus.Pausing : dbDownloadTask.Status;
+        ;
+        CancellationTokenSource = new CancellationTokenSource();
     }
 
     public ReactiveCommand<Unit, Unit> StatusCommand =>

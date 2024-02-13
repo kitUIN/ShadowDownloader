@@ -21,6 +21,7 @@ public partial class MainWindowViewModel
         DownloadUtil.DownloadProcessChanged += OnDownloadProcessChanged;
         DownloadUtil.DownloadSpeedChanged += OnDownloadSpeedChanged;
         DownloadUtil.ParallelDownloadProcessChanged += OnParallelDownloadProcessChanged;
+        InitHistory();
     }
 
     private async void OnParallelDownloadProcessChanged(object? sender, ParallelDownloadProcessArg e)

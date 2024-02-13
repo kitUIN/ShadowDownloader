@@ -23,9 +23,6 @@ public partial class MainWindowViewModel : ViewModelBase
     public ReactiveCommand<string, Unit> ShowAddUrlCommand =>
         ReactiveCommand.CreateFromTask<string>(ShowAddUrlAsync);
 
-    public ReactiveCommand<string, Unit> DownloadAllCommand =>
-        ReactiveCommand.CreateFromTask<string>(DownloadAllFileAsync);
-
     private async Task DownloadAllFileAsync(string id)
     {
         IsOpenInCheckFile = false;
@@ -77,14 +74,14 @@ public partial class MainWindowViewModel : ViewModelBase
     /// <param name="taskRecord"></param>
     private void InitTask(DownloadUtil.DownloadTaskRecord taskRecord, string adapterId)
     {
-        var task = new DownloadTask(taskRecord.TaskId, taskRecord.Name, taskRecord.Size, taskRecord.Parallel,
-            taskRecord.TokenSource, adapterId);
+        var task = new DownloadTask(taskRecord.TaskId, taskRecord.Name, taskRecord.Size, adapterId, taskRecord.Parallel,
+            taskRecord.TokenSource);
         Tasks.Insert(0, task);
         Log.Information("[Task {TaskId}| Parallel 000]添加下载任务: {Name}, Size:{Size}B", task.TaskId, task.Name, task.Size);
         for (var i = 0; i < taskRecord.ParallelSizeList.Count; i++)
         {
             var pTask = new ParallelDownloadTask(taskRecord.TaskId,
-                i + 1, taskRecord.Name, taskRecord.ParallelSizeList[i]);
+                i + 1, taskRecord.Name, taskRecord.ParallelSizeList[i], adapterId);
             task.Siblings.Add(pTask);
             Log.Information("[Task {TaskId}| Parallel {ParallelId:000}]添加下载任务线程: Size:{Size}B", pTask.TaskId,
                 pTask.ParallelId,
@@ -100,5 +97,19 @@ public partial class MainWindowViewModel : ViewModelBase
             IsVisibleInCheckFile = false;
             CheckFiles.Add(fcr);
         }
+    }
+
+    private void InitHistory()
+    {
+        DbClient.Db.Queryable<DbDownloadTask>().ForEach(
+            task =>
+            {
+                var t = new DownloadTask(task);
+                DbClient.Db.Queryable<DbParallelDownloadTask>()
+                    .Where(x => x.TaskId == t.TaskId)
+                    .OrderBy(x => x.ParallelId)
+                    .ForEach(pTask => t.Append(new ParallelDownloadTask(pTask)));
+                Tasks.Insert(0, t);
+            });
     }
 }

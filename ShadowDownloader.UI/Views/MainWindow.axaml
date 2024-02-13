@@ -32,6 +32,7 @@
         <converter:TaskPlayEnableConverter x:Key="TaskPlayEnableConverter" />
         <converter:TaskRemoveEnableConverter x:Key="TaskCancelEnableConverter" />
         <converter:TaskPlayTipConverter x:Key="TaskPlayTipConverter" />
+        <converter:TaskSpeedEnableConverter x:Key="TaskSpeedEnableConverter" />
 
         <DataTemplate x:DataType="model:CheckFileResult" x:Key="CheckFileTemplate">
             <Grid Margin="5">
@@ -144,9 +145,15 @@
                                         VerticalAlignment="Center">
                                         <StackPanel VerticalAlignment="Center">
                                             <Grid ColumnDefinitions="Auto,*,Auto,*,Auto">
-                                                <TextBlock Grid.Column="0" Text="{Binding Speed, Converter={StaticResource SpeedConverter}}" />
+                                                <TextBlock
+                                                    Grid.Column="0"
+                                                    IsVisible="{Binding Status, Converter={StaticResource TaskSpeedEnableConverter}}"
+                                                    Text="{Binding Speed, Converter={StaticResource SpeedConverter}}" />
                                                 <TextBlock Grid.Column="2" Text="{Binding Size, Converter={StaticResource SizeConverter}}" />
-                                                <TextBlock Grid.Column="4" Text="{Binding RemainTime, Converter={StaticResource RemainTimeConverter}}" />
+                                                <TextBlock
+                                                    Grid.Column="4"
+                                                    IsVisible="{Binding Status, Converter={StaticResource TaskSpeedEnableConverter}}"
+                                                    Text="{Binding RemainTime, Converter={StaticResource RemainTimeConverter}}" />
                                             </Grid>
                                             <ProgressBar
                                                 Foreground="{Binding Status, Converter={StaticResource ProgressColorConverter}}"
@@ -163,7 +170,7 @@
                                     </StackPanel>
                                 </Grid>
                             </Expander.Header>
-                            <ListBox ItemsSource="{Binding Siblings}">
+                            <ListBox ItemsSource="{Binding Siblings}" SelectionMode="AlwaysSelected">
                                 <ListBox.ItemTemplate>
                                     <DataTemplate x:DataType="models:ParallelDownloadTask">
                                         <Grid ColumnDefinitions="Auto,*,Auto">
