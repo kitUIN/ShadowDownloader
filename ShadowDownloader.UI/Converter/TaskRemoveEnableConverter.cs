@@ -8,10 +8,8 @@ public class TaskRemoveEnableConverter : DownloadStatusAbstractConverter
     {
         return status switch
         {
-            DownloadStatus.Running => true,
-            DownloadStatus.Pausing => true,
-            DownloadStatus.Pending => true,
-            _ => false,
+            DownloadStatus.Running => false,
+            _ => true,
         };
     }
 }

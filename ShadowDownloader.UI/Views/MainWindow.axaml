@@ -30,7 +30,7 @@
         <converter:TaskStatusStringConverter x:Key="TaskStatusStringConverter" />
         <converter:TaskPlayConverter x:Key="TaskPlayConverter" />
         <converter:TaskPlayEnableConverter x:Key="TaskPlayEnableConverter" />
-        <converter:TaskRemoveEnableConverter x:Key="TaskCancelEnableConverter" />
+        <converter:TaskRemoveEnableConverter x:Key="TaskRemoveEnableConverter" />
         <converter:TaskPlayTipConverter x:Key="TaskPlayTipConverter" />
         <converter:TaskSpeedEnableConverter x:Key="TaskSpeedEnableConverter" />
 
@@ -79,6 +79,12 @@
                         Tag="cow">
                         <ui:CommandBarButton.IconSource>
                             <icon:FluentIconSource Icon="AddCircle24Filled" />
+                        </ui:CommandBarButton.IconSource>
+                    </ui:CommandBarButton>
+                    <ui:CommandBarSeparator />
+                    <ui:CommandBarButton Label="设置">
+                        <ui:CommandBarButton.IconSource>
+                            <icon:FluentIconSource Icon="Settings24Regular" />
                         </ui:CommandBarButton.IconSource>
                     </ui:CommandBarButton>
                 </ui:CommandBar.PrimaryCommands>
@@ -131,10 +137,10 @@
                                                 Icon="{Binding Status, Converter={StaticResource TaskPlayConverter}}"
                                                 Width="16" />
                                         </ui:HyperlinkButton>
-                                        <ui:HyperlinkButton IsEnabled="{Binding Status, Converter={StaticResource TaskCancelEnableConverter}}" ToolTip.Tip="删除">
+                                        <ui:HyperlinkButton IsEnabled="{Binding Status, Converter={StaticResource TaskRemoveEnableConverter}}" ToolTip.Tip="删除">
                                             <icon:FluentIcon
                                                 Height="16"
-                                                Icon="DismissCircle24Regular"
+                                                Icon="Delete24Regular"
                                                 Width="16" />
                                         </ui:HyperlinkButton>
                                     </StackPanel>
