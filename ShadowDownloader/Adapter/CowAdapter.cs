@@ -46,7 +46,7 @@ public class CowAdapter : IAdapter
 
     private static async Task<LinkResponse?> FetchLink(string guid, CowFile cowFile)
     {
-        var uri = Format(DownloadLinks, guid, HttpUtility.UrlEncode(cowFile.FileInfo.Title), cowFile.Id);
+        var uri = Format(DownloadLinks, guid, HttpUtility.UrlEncode(cowFile.FileInfo?.Title), cowFile.Id);
         using var request = new HttpRequestMessage(HttpMethod.Get, uri);
         var response = await DownloadUtil.SendAsync(request);
         var res = await response.Content.ReadAsStringAsync();
@@ -54,6 +54,7 @@ public class CowAdapter : IAdapter
     }
 
     public static string Id => "cow";
+    public static string Name => "奶牛快传";
 
     /// <summary>
     /// <inheritdoc/>
@@ -61,6 +62,14 @@ public class CowAdapter : IAdapter
     public string GetId()
     {
         return Id;
+    }
+
+    /// <summary>
+    /// <inheritdoc/>
+    /// </summary>
+    public string GetName()
+    {
+        return Name;
     }
 
     /// <summary>

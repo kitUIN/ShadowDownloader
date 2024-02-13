@@ -9,6 +9,10 @@ public interface IAdapter
     /// </summary>
     public string GetId();
 
+    /// <summary>
+    /// 适配器名称
+    /// </summary>
+    public string GetName();
 
     public CheckUrlResult CheckUrl(string url);
 

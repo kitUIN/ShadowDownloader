@@ -48,7 +48,7 @@ public partial class MainWindowViewModel : ViewModelBase
         };
         var dialog = new ContentDialog
         {
-            Title = id,
+            Title = App.Downloader.GetAdapter(id).GetName(),
             PrimaryButtonText = "确定",
             DefaultButton = ContentDialogButton.Primary,
             IsPrimaryButtonEnabled = true,
@@ -62,9 +62,10 @@ public partial class MainWindowViewModel : ViewModelBase
             var res = App.Downloader.CheckUrl(id, url);
             if (res.Success)
             {
-                IsOpenInCheckFile = true;
+                TaskDialogShowAsync("CheckFileTaskDialog");
                 IsVisibleInCheckFile = true;
                 await CheckFilesInit(id, res);
+                IsVisibleInCheckFile = false;
             }
         };
         await ContentDialogShowAsync(dialog);

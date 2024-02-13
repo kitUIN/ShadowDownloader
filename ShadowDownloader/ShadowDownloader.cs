@@ -1,4 +1,5 @@
 ﻿using ShadowDownloader.Adapter;
+using ShadowDownloader.Exception;
 using ShadowDownloader.Model;
 
 namespace ShadowDownloader;
@@ -30,7 +31,7 @@ public class ShadowDownloader
         var adapter = Adapters.FirstOrDefault(x => x.GetId() == id);
         if (adapter is null)
         {
-            throw new Exception("未找到适配器");
+            throw new AdapterNotFoundException("未找到适配器");
         }
 
         return adapter;

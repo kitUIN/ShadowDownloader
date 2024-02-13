@@ -168,7 +168,7 @@ public static class DownloadUtil
                     parallelStatus.SetStatus(DownloadStatus.Pausing);
                     ParallelDownloadStatusChanged?.Invoke(sender, parallelStatus);
                 }
-                catch (Exception ex)
+                catch (System.Exception ex)
                 {
                     Log.Error(ex, "[Task {TaskId}| Parallel {ParallelId:000}]", taskId, parallelId);
                     parallelStatus.SetStatus(DownloadStatus.Error);
@@ -204,7 +204,7 @@ public static class DownloadUtil
                 status.SetStatus(DownloadStatus.Pausing);
                 DownloadStatusChanged?.Invoke(sender, status);
             }
-            catch (Exception ex)
+            catch (System.Exception ex)
             {
                 Log.Error(ex, "[Task {TaskId}| Parallel 000]", taskId);
                 status.SetStatus(DownloadStatus.Error);

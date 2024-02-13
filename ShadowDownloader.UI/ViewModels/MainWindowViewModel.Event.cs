@@ -1,4 +1,5 @@
-﻿using Serilog;
+﻿using System;
+using Serilog;
 using ShadowDownloader.Arg;
 using ShadowDownloader.Enum;
 
@@ -6,6 +7,13 @@ namespace ShadowDownloader.UI.ViewModels;
 
 public partial class MainWindowViewModel
 {
+    public static event EventHandler<string>? TaskDialogShowed;
+
+    private void TaskDialogShowAsync(string taskDialogName)
+    {
+        TaskDialogShowed?.Invoke(this, taskDialogName);
+    }
+
     public MainWindowViewModel()
     {
         DownloadUtil.DownloadStatusChanged += OnDownloadStatusChanged;
