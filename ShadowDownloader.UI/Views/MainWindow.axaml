@@ -138,7 +138,10 @@
                                                 Icon="{Binding Status, Converter={StaticResource TaskPlayConverter}}"
                                                 Width="16" />
                                         </ui:HyperlinkButton>
-                                        <ui:HyperlinkButton IsEnabled="{Binding Status, Converter={StaticResource TaskRemoveEnableConverter}}" ToolTip.Tip="删除">
+                                        <ui:HyperlinkButton
+                                            Command="{Binding RemoveCommand}"
+                                            IsEnabled="{Binding Status, Converter={StaticResource TaskRemoveEnableConverter}}"
+                                            ToolTip.Tip="删除">
                                             <icon:FluentIcon
                                                 Height="16"
                                                 Icon="Delete24Regular"

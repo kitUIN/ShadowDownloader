@@ -1,6 +1,5 @@
 ﻿using System.Linq;
 using System.Threading.Tasks;
-using FluentAvalonia.UI.Controls;
 using Serilog;
 using ShadowDownloader.Model;
 using ShadowDownloader.UI.Models;
@@ -9,13 +8,6 @@ namespace ShadowDownloader.UI.ViewModels;
 
 public partial class MainWindowViewModel : ViewModelBase
 {
-    private async Task<ContentDialogResult> ContentDialogShowAsync(ContentDialog dialog)
-    {
-        var dialogResult = await dialog.ShowAsync();
-        return dialogResult;
-    }
-
-
     /// <summary>
     /// 初始化下载任务
     /// </summary>

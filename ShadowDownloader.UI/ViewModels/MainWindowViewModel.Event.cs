@@ -2,12 +2,19 @@
 using Serilog;
 using ShadowDownloader.Arg;
 using ShadowDownloader.Enum;
+using ShadowDownloader.UI.Models;
 
 namespace ShadowDownloader.UI.ViewModels;
 
 public partial class MainWindowViewModel
 {
+    public static event EventHandler<DownloadTask>? TaskRemoved;
     public static event EventHandler<string>? TaskDialogShowed;
+
+    public static void TaskRemovedInvoke(DownloadTask task)
+    {
+        TaskRemoved?.Invoke(null, task);
+    }
 
     private void TaskDialogShowAsync(string taskDialogName)
     {
@@ -21,8 +28,9 @@ public partial class MainWindowViewModel
         DownloadUtil.DownloadProcessChanged += OnDownloadProcessChanged;
         DownloadUtil.DownloadSpeedChanged += OnDownloadSpeedChanged;
         DownloadUtil.ParallelDownloadProcessChanged += OnParallelDownloadProcessChanged;
+        TaskRemoved += (_, task) => Tasks.Remove(task);
         InitHistory();
-        CheckFiles.CollectionChanged += (sender, args) => { CheckFileCount = CheckFiles.Count > 0; };
+        CheckFiles.CollectionChanged += (_, _) => CheckFileCount = CheckFiles.Count > 0;
     }
 
     private async void OnParallelDownloadProcessChanged(object? sender, ParallelDownloadProcessArg e)

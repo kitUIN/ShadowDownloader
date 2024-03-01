@@ -2,8 +2,10 @@
 using System.Reactive;
 using System.Threading;
 using System.Threading.Tasks;
+using FluentAvalonia.UI.Controls;
 using ReactiveUI;
 using ShadowDownloader.Enum;
+using ShadowDownloader.UI.ViewModels;
 
 namespace ShadowDownloader.UI.Models;
 
@@ -118,7 +120,29 @@ public class DownloadTask : ReactiveObject
         ReactiveCommand.Create(CheckStatus);
 
     public ReactiveCommand<Unit, Unit> RemoveCommand =>
-        ReactiveCommand.Create(CheckStatus);
+        ReactiveCommand.CreateFromTask(ShowDoubleCheckDialogAsync);
+
+    private async Task RemoveDb()
+    {
+        await RemoveAllDbAsync();
+        MainWindowViewModel.TaskRemovedInvoke(this);
+    }
+
+    private async Task ShowDoubleCheckDialogAsync()
+    {
+        var dialog = new ContentDialog
+        {
+            Title = "确定删除?",
+            PrimaryButtonText = "确定",
+            DefaultButton = ContentDialogButton.Primary,
+            IsPrimaryButtonEnabled = true,
+            IsSecondaryButtonEnabled = true,
+            SecondaryButtonText = "取消",
+            Content = $"确定删除{Name}?"
+        };
+        dialog.PrimaryButtonClick += async (_, _) => await RemoveDb();
+        await dialog.ShowAsync();
+    }
 
     private void CheckStatus()
     {
@@ -162,5 +186,23 @@ public class DownloadTask : ReactiveObject
             Size = Size,
             Status = Status,
         }).ExecuteCommandAsync();
+    }
+
+    public async Task RemoveDbAsync()
+    {
+        await DbClient.Db.Deleteable(new DbDownloadTask
+        {
+            TaskId = TaskId
+        }).ExecuteCommandAsync();
+    }
+
+    public async Task RemoveAllDbAsync()
+    {
+        foreach (var parallelDownloadTask in Siblings)
+        {
+            await parallelDownloadTask.RemoveDbAsync();
+        }
+
+        await RemoveDbAsync();
     }
 }

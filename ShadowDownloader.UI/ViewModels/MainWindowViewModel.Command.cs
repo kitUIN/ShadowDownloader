@@ -13,13 +13,13 @@ namespace ShadowDownloader.UI.ViewModels;
 public partial class MainWindowViewModel
 {
     public ReactiveCommand<string, Unit> ShowAddUrlCommand =>
-        ReactiveCommand.CreateFromTask<string>(ShowAddUrlAsync);
+        ReactiveCommand.CreateFromTask<string>(ShowAddUrlDialogAsync);
 
     /// <summary>
-    /// 奶牛快传 添加解析
+    /// 添加下载解析窗口
     /// </summary>
     /// <param name="id">id</param>
-    private async Task ShowAddUrlAsync(string id)
+    private async Task ShowAddUrlDialogAsync(string id)
     {
         _currentId = id;
         var text = new TextBox()
@@ -51,7 +51,7 @@ public partial class MainWindowViewModel
                 IsVisibleInCheckFile = false;
             }
         };
-        await ContentDialogShowAsync(dialog);
+        await dialog.ShowAsync();
     }
 
     public ReactiveCommand<Unit, Unit> DownloadAllCommand =>

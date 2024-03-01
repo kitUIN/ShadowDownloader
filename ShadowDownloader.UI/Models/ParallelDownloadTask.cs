@@ -49,4 +49,12 @@ public class ParallelDownloadTask : DownloadTask
         }).DefaultAddElseUpdate().ExecuteReturnEntityAsync();
         _dbId = dbTask.Id;
     }
+
+    public new async Task RemoveDbAsync()
+    {
+        await DbClient.Db.Deleteable(new DbParallelDownloadTask
+        {
+            Id = _dbId
+        }).ExecuteCommandAsync();
+    }
 }
