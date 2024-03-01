@@ -201,17 +201,19 @@
                                                 Orientation="Horizontal"
                                                 Spacing="10"
                                                 VerticalAlignment="Center">
-                                                <TextBlock Text="{Binding Size, Converter={StaticResource SizeConverter}}" />
+                                                <TextBlock Text="{Binding Received, Converter={StaticResource SizeConverter}}" Width="60" />
                                                 <ProgressBar
                                                     Foreground="{Binding Status, Converter={StaticResource ProgressColorConverter}}"
                                                     Maximum="100"
                                                     Minimum="0"
                                                     Value="{Binding Percent}"
                                                     Width="100" />
+                                                <TextBlock Text="{Binding Size, Converter={StaticResource SizeConverter}}" Width="60" />
                                                 <TextBlock
                                                     Text="{Binding Percent, Converter={StaticResource PercentConverter}}"
                                                     ToolTip.Tip="{Binding Received, Converter={StaticResource SizeConverter}, ConverterParameter=tip}"
                                                     Width="50" />
+
                                             </StackPanel>
                                         </Grid>
                                     </DataTemplate>
