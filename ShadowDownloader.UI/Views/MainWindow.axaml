@@ -2,7 +2,7 @@
     Height="750"
     Icon="/Assets/avalonia-logo.ico"
     Title="ShadowDownloader.UI"
-    Width="650"
+    Width="700"
     WindowStartupLocation="CenterScreen"
     d:DesignHeight="450"
     d:DesignWidth="800"
@@ -156,7 +156,7 @@
                                                     Grid.Column="0"
                                                     IsVisible="{Binding Status, Converter={StaticResource TaskSpeedEnableConverter}}"
                                                     Text="{Binding Speed, Converter={StaticResource SpeedConverter}}" />
-                                                <TextBlock Grid.Column="2" Text="{Binding Size, Converter={StaticResource SizeConverter}}" />
+                                                <TextBlock Grid.Column="2" Text="{Binding Received, Converter={StaticResource SizeConverter}}" />
                                                 <TextBlock
                                                     Grid.Column="4"
                                                     IsVisible="{Binding Status, Converter={StaticResource TaskSpeedEnableConverter}}"
@@ -170,10 +170,15 @@
                                                 Width="200" />
                                         </StackPanel>
                                         <TextBlock
+                                            Text="{Binding Size, Converter={StaticResource SizeConverter}}"
+                                            VerticalAlignment="Center"
+                                            Width="60" />
+                                        <TextBlock
                                             Text="{Binding Percent, Converter={StaticResource PercentConverter}}"
                                             ToolTip.Tip="{Binding Received, Converter={StaticResource SizeConverter}, ConverterParameter=tip}"
                                             VerticalAlignment="Center"
                                             Width="50" />
+
                                     </StackPanel>
                                 </Grid>
                             </Expander.Header>
