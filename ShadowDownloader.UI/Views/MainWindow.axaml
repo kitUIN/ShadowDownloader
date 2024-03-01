@@ -1,5 +1,5 @@
 <Window
-    Height="800"
+    Height="750"
     Icon="/Assets/avalonia-logo.ico"
     Title="ShadowDownloader.UI"
     Width="650"
@@ -176,7 +176,10 @@
                                     </StackPanel>
                                 </Grid>
                             </Expander.Header>
-                            <ListBox ItemsSource="{Binding Siblings}" SelectionMode="AlwaysSelected">
+                            <ListBox
+                                ItemsSource="{Binding Siblings}"
+                                MaxHeight="440"
+                                SelectionMode="AlwaysSelected">
                                 <ListBox.ItemTemplate>
                                     <DataTemplate x:DataType="models:ParallelDownloadTask">
                                         <Grid ColumnDefinitions="Auto,*,Auto">
@@ -227,10 +230,11 @@
             x:Name="CheckFileTaskDialog">
             <ui:TaskDialog.Buttons>
                 <ui:TaskDialogButton
+                    Command="{Binding DownloadAllCommand}"
                     DialogResult="All"
                     IsDefault="True"
                     Text="全部下载" />
-                <ui:TaskDialogButton Text="下载选中文件" />
+                <ui:TaskDialogButton IsEnabled="False" Text="下载选中文件" />
                 <ui:TaskDialogButton Text="取消" />
             </ui:TaskDialog.Buttons>
             <ui:TaskDialog.Content>
@@ -239,7 +243,10 @@
                     Margin="0,10,0,0"
                     RowDefinitions="*,Auto">
                     <Grid Grid.Row="0">
-                        <ListBox ItemTemplate="{StaticResource CheckFileTemplate}" ItemsSource="{Binding CheckFiles}" />
+                        <ListBox
+                            ItemTemplate="{StaticResource CheckFileTemplate}"
+                            ItemsSource="{Binding CheckFiles}"
+                            SelectionMode="Multiple" />
                         <ui:ProgressRing
                             BorderThickness="5"
                             Height="50"

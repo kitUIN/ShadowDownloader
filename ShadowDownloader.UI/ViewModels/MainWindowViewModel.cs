@@ -1,12 +1,8 @@
-﻿using System.Reactive;
+﻿using System.Linq;
 using System.Threading.Tasks;
-using Avalonia.Controls;
-using Avalonia.Media;
 using FluentAvalonia.UI.Controls;
-using ReactiveUI;
 using Serilog;
 using ShadowDownloader.Model;
-using ShadowDownloader.UI.Extension;
 using ShadowDownloader.UI.Models;
 
 namespace ShadowDownloader.UI.ViewModels;
@@ -19,54 +15,6 @@ public partial class MainWindowViewModel : ViewModelBase
         return dialogResult;
     }
 
-
-    public ReactiveCommand<string, Unit> ShowAddUrlCommand =>
-        ReactiveCommand.CreateFromTask<string>(ShowAddUrlAsync);
-
-    private async Task DownloadAllFileAsync(string id)
-    {
-        IsOpenInCheckFile = false;
-        foreach (var checkFile in CheckFiles)
-        {
-            var taskRecord = await App.Downloader.Download(id, checkFile);
-            InitTask(taskRecord, id);
-            taskRecord.ScheduleTasks.StartAll();
-        }
-    }
-
-    private async Task ShowAddUrlAsync(string id)
-    {
-        var text = new TextBox()
-        {
-            MaxWidth = 280,
-            MaxLines = 6,
-            TextWrapping = TextWrapping.Wrap,
-            Watermark = "输入你要下载的地址"
-        };
-        var dialog = new ContentDialog
-        {
-            Title = App.Downloader.GetAdapter(id).GetName(),
-            PrimaryButtonText = "确定",
-            DefaultButton = ContentDialogButton.Primary,
-            IsPrimaryButtonEnabled = true,
-            IsSecondaryButtonEnabled = true,
-            SecondaryButtonText = "取消",
-            Content = text,
-        };
-        dialog.PrimaryButtonClick += async (sender, args) =>
-        {
-            if (sender.Content is not TextBox { Text: { } url }) return;
-            var res = App.Downloader.CheckUrl(id, url);
-            if (res.Success)
-            {
-                TaskDialogShowAsync("CheckFileTaskDialog");
-                IsVisibleInCheckFile = true;
-                await CheckFilesInit(id, res);
-                IsVisibleInCheckFile = false;
-            }
-        };
-        await ContentDialogShowAsync(dialog);
-    }
 
     /// <summary>
     /// 初始化下载任务
@@ -111,5 +59,34 @@ public partial class MainWindowViewModel : ViewModelBase
                     .ForEach(pTask => t.Append(new ParallelDownloadTask(pTask)));
                 Tasks.Insert(0, t);
             });
+    }
+
+
+    /// <summary>
+    /// 从下载列表中获取
+    /// </summary>
+    /// <param name="taskId">taskId</param>
+    private DownloadTask? GetDownloadTask(int taskId)
+    {
+        return Tasks.FirstOrDefault(x => x.TaskId == taskId);
+    }
+
+    /// <summary>
+    /// 从下载列表中获取线程
+    /// </summary>
+    /// <param name="taskId">taskId</param>
+    /// <param name="parallelId">parallelId</param>
+    private ParallelDownloadTask? GetParallelDownloadTask(int taskId, int parallelId)
+    {
+        if (GetDownloadTask(taskId) is { } task)
+        {
+            for (var i = 0; i < task.Siblings.Count; i++)
+            {
+                if (task.Siblings[i].ParallelId == parallelId)
+                    return task.Siblings[i];
+            }
+        }
+
+        return null;
     }
 }

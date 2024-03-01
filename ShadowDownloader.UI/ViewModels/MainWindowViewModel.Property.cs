@@ -1,5 +1,4 @@
 ﻿using System.Collections.ObjectModel;
-using System.Linq;
 using ReactiveUI;
 using ShadowDownloader.Model;
 using ShadowDownloader.UI.Models;
@@ -69,31 +68,5 @@ public partial class MainWindowViewModel
     #endregion
 
 
-    /// <summary>
-    /// 从下载列表中获取
-    /// </summary>
-    /// <param name="taskId">taskId</param>
-    private DownloadTask? GetDownloadTask(int taskId)
-    {
-        return Tasks.FirstOrDefault(x => x.TaskId == taskId);
-    }
-
-    /// <summary>
-    /// 从下载列表中获取线程
-    /// </summary>
-    /// <param name="taskId">taskId</param>
-    /// <param name="parallelId">parallelId</param>
-    private ParallelDownloadTask? GetParallelDownloadTask(int taskId, int parallelId)
-    {
-        if (GetDownloadTask(taskId) is { } task)
-        {
-            for (var i = 0; i < task.Siblings.Count; i++)
-            {
-                if (task.Siblings[i].ParallelId == parallelId)
-                    return task.Siblings[i];
-            }
-        }
-
-        return null;
-    }
+    private string _currentId = "";
 }
