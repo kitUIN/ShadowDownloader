@@ -111,7 +111,6 @@ public class DownloadTask : ReactiveObject
         Received = dbDownloadTask.Received;
         AdapterId = dbDownloadTask.AdapterId;
         Status = dbDownloadTask.Status == DownloadStatus.Running ? DownloadStatus.Pausing : dbDownloadTask.Status;
-        ;
         CancellationTokenSource = new CancellationTokenSource();
     }
 
@@ -123,15 +122,23 @@ public class DownloadTask : ReactiveObject
 
     private void CheckStatus()
     {
-        if (Status == DownloadStatus.Running) // 正在运行则取消
+        switch (Status)
         {
-            CancellationTokenSource?.Cancel();
-        }
-        else if (Status == DownloadStatus.Error) // 失败则重试
-        {
-        }
-        else if (Status == DownloadStatus.Pausing) // 暂停则继续
-        {
+            // 正在运行则取消
+            case DownloadStatus.Running:
+                CancellationTokenSource?.Cancel();
+                Status = DownloadStatus.Pausing;
+                break;
+            // 失败则重试
+            case DownloadStatus.Error:
+                break;
+            // 暂停则继续
+            case DownloadStatus.Pausing:
+                break;
+            case DownloadStatus.Pending:
+                break;
+            case DownloadStatus.Completed:
+                break;
         }
     }
 

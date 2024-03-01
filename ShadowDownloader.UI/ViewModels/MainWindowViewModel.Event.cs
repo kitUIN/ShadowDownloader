@@ -22,6 +22,7 @@ public partial class MainWindowViewModel
         DownloadUtil.DownloadSpeedChanged += OnDownloadSpeedChanged;
         DownloadUtil.ParallelDownloadProcessChanged += OnParallelDownloadProcessChanged;
         InitHistory();
+        CheckFiles.CollectionChanged += (sender, args) => { CheckFileCount = CheckFiles.Count > 0; };
     }
 
     private async void OnParallelDownloadProcessChanged(object? sender, ParallelDownloadProcessArg e)

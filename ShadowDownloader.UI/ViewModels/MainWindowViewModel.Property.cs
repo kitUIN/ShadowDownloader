@@ -67,17 +67,32 @@ public partial class MainWindowViewModel
 
     #endregion
 
-    #region CheckFile SelectedItems
+    #region Dialog中的下载选中是否启用
 
     private bool _checkFileSelectedItems;
 
     /// <summary>
-    ///  
+    ///  Dialog中的下载选中是否启用
     /// </summary>
     public bool CheckFileSelectedItems
     {
         get => _checkFileSelectedItems;
         set => this.RaiseAndSetIfChanged(ref _checkFileSelectedItems, value);
+    }
+
+    #endregion
+
+    #region Dialog中的全部下载是否启用
+
+    private bool _checkFileCount;
+
+    /// <summary>
+    ///  Dialog中的全部下载是否启用
+    /// </summary>
+    public bool CheckFileCount
+    {
+        get => _checkFileCount;
+        set => this.RaiseAndSetIfChanged(ref _checkFileCount, value);
     }
 
     #endregion

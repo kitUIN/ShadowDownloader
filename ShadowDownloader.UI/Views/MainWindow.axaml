@@ -234,6 +234,7 @@
                     Command="{Binding DownloadAllCommand}"
                     DialogResult="All"
                     IsDefault="True"
+                    IsEnabled="{Binding CheckFileCount}"
                     Text="全部下载" />
                 <ui:TaskDialogButton
                     Command="{Binding DownloadSelectedCommand}"
