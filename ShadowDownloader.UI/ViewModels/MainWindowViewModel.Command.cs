@@ -1,9 +1,11 @@
-﻿using System.Reactive;
+﻿using System.Collections;
+using System.Reactive;
 using System.Threading.Tasks;
 using Avalonia.Controls;
 using Avalonia.Media;
 using FluentAvalonia.UI.Controls;
 using ReactiveUI;
+using ShadowDownloader.Model;
 using ShadowDownloader.UI.Extension;
 
 namespace ShadowDownloader.UI.ViewModels;
@@ -62,6 +64,26 @@ public partial class MainWindowViewModel
     {
         IsOpenInCheckFile = false;
         foreach (var checkFile in CheckFiles)
+        {
+            var taskRecord = await App.Downloader.Download(_currentId, checkFile);
+            InitTask(taskRecord, _currentId);
+            taskRecord.ScheduleTasks.StartAll();
+        }
+
+        _currentId = "";
+    }
+
+    public ReactiveCommand<IList?, Unit> DownloadSelectedCommand =>
+        ReactiveCommand.CreateFromTask<IList?>(DownloadSelectedFileAsync);
+
+    /// <summary>
+    /// TaskDialog 中的 下载选中
+    /// </summary>
+    private async Task DownloadSelectedFileAsync(IList? list)
+    {
+        if (list is null) return;
+        IsOpenInCheckFile = false;
+        foreach (CheckFileResult checkFile in list)
         {
             var taskRecord = await App.Downloader.Download(_currentId, checkFile);
             InitTask(taskRecord, _currentId);

@@ -1,5 +1,6 @@
 using Avalonia.Controls;
 using Avalonia.Interactivity;
+using ShadowDownloader.UI.Converter;
 using ShadowDownloader.UI.ViewModels;
 
 namespace ShadowDownloader.UI.Views;
@@ -21,5 +22,13 @@ public partial class MainWindow : Window
     private void CheckFileTaskDialog_OnLoaded(object? sender, RoutedEventArgs e)
     {
         CheckFileTaskDialog.DataContext = this.DataContext;
+    }
+
+    private void CheckFileListBox_OnSelectionChanged(object? sender, SelectionChangedEventArgs e)
+    {
+        if (DataContext is MainWindowViewModel vm)
+        {
+            vm.CheckFileSelectedItems = ListNotNullConverter.CheckIList(CheckFileListBox.SelectedItems);
+        }
     }
 }

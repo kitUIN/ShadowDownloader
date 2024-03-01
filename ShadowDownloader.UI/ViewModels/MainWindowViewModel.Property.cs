@@ -67,6 +67,20 @@ public partial class MainWindowViewModel
 
     #endregion
 
+    #region CheckFile SelectedItems
+
+    private bool _checkFileSelectedItems;
+
+    /// <summary>
+    ///  
+    /// </summary>
+    public bool CheckFileSelectedItems
+    {
+        get => _checkFileSelectedItems;
+        set => this.RaiseAndSetIfChanged(ref _checkFileSelectedItems, value);
+    }
+
+    #endregion
 
     private string _currentId = "";
 }

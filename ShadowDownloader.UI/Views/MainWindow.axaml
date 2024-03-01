@@ -33,6 +33,7 @@
         <converter:TaskRemoveEnableConverter x:Key="TaskRemoveEnableConverter" />
         <converter:TaskPlayTipConverter x:Key="TaskPlayTipConverter" />
         <converter:TaskSpeedEnableConverter x:Key="TaskSpeedEnableConverter" />
+        <converter:ListNotNullConverter x:Key="ListNotNullConverter" />
 
         <DataTemplate x:DataType="model:CheckFileResult" x:Key="CheckFileTemplate">
             <Grid Margin="5">
@@ -234,7 +235,11 @@
                     DialogResult="All"
                     IsDefault="True"
                     Text="全部下载" />
-                <ui:TaskDialogButton IsEnabled="False" Text="下载选中文件" />
+                <ui:TaskDialogButton
+                    Command="{Binding DownloadSelectedCommand}"
+                    CommandParameter="{Binding #CheckFileListBox.SelectedItems}"
+                    IsEnabled="{Binding CheckFileSelectedItems}"
+                    Text="下载选中文件" />
                 <ui:TaskDialogButton Text="取消" />
             </ui:TaskDialog.Buttons>
             <ui:TaskDialog.Content>
@@ -246,7 +251,9 @@
                         <ListBox
                             ItemTemplate="{StaticResource CheckFileTemplate}"
                             ItemsSource="{Binding CheckFiles}"
-                            SelectionMode="Multiple" />
+                            SelectionChanged="CheckFileListBox_OnSelectionChanged"
+                            SelectionMode="Multiple,Toggle"
+                            x:Name="CheckFileListBox" />
                         <ui:ProgressRing
                             BorderThickness="5"
                             Height="50"
