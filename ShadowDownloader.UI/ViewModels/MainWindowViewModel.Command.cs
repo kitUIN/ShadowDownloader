@@ -7,6 +7,7 @@ using FluentAvalonia.UI.Controls;
 using ReactiveUI;
 using ShadowDownloader.Model;
 using ShadowDownloader.UI.Extension;
+using ShadowDownloader.UI.Views;
 
 namespace ShadowDownloader.UI.ViewModels;
 
@@ -99,5 +100,17 @@ public partial class MainWindowViewModel
     private static void OpenSavePath()
     {
         System.Diagnostics.Process.Start("Explorer.exe", App.Downloader.Config.SavePath);
+    }
+
+    public ReactiveCommand<Unit, Unit> OpenSettingCommand =>
+        ReactiveCommand.Create(OpenSetting);
+
+    private static void OpenSetting()
+    {
+        var settingWindow = new SettingWindow()
+        {
+            DataContext = new SettingWindowViewModel()
+        };
+        settingWindow.Show();
     }
 }

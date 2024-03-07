@@ -88,7 +88,7 @@
                             <icon:FluentIconSource Icon="Folder24Regular" />
                         </ui:CommandBarButton.IconSource>
                     </ui:CommandBarButton>
-                    <ui:CommandBarButton Label="设置">
+                    <ui:CommandBarButton Command="{Binding OpenSettingCommand}" Label="设置">
                         <ui:CommandBarButton.IconSource>
                             <icon:FluentIconSource Icon="Settings24Regular" />
                         </ui:CommandBarButton.IconSource>
