@@ -83,7 +83,7 @@
                         </ui:CommandBarButton.IconSource>
                     </ui:CommandBarButton>
                     <ui:CommandBarSeparator />
-                    <ui:CommandBarButton Label="下载文件夹">
+                    <ui:CommandBarButton Command="{Binding OpenSavePathCommand}" Label="下载文件夹">
                         <ui:CommandBarButton.IconSource>
                             <icon:FluentIconSource Icon="Folder24Regular" />
                         </ui:CommandBarButton.IconSource>

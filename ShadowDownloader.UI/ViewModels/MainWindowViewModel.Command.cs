@@ -92,4 +92,12 @@ public partial class MainWindowViewModel
 
         _currentId = "";
     }
+
+    public ReactiveCommand<Unit, Unit> OpenSavePathCommand =>
+        ReactiveCommand.Create(OpenSavePath);
+
+    private static void OpenSavePath()
+    {
+        System.Diagnostics.Process.Start("Explorer.exe", App.Downloader.Config.SavePath);
+    }
 }
