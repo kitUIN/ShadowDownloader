@@ -10,6 +10,7 @@
     x:Class="ShadowDownloader.UI.Views.SettingWindow"
     x:DataType="viewModels:SettingWindowViewModel"
     xmlns="https://github.com/avaloniaui"
+    xmlns:controls="clr-namespace:FluentAvalonia.UI.Controls;assembly=FluentAvalonia"
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:icon="using:FluentAvalonia.FluentIcons"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
@@ -52,7 +53,9 @@
                 <TextBox
                     Grid.Column="2"
                     Height="32"
-                    Watermark="例如:http://127.0.0.1:8888" />
+                    Text="{Binding Proxies, Mode=TwoWay}"
+                    Watermark="例如: http://127.0.0.1:8888"
+                    Width="200" />
             </Grid>
         </Border>
         <Border Classes="SettingCard">
@@ -81,7 +84,7 @@
                     Orientation="Horizontal"
                     Spacing="10"
                     VerticalAlignment="Center">
-                    <TextBlock 
+                    <TextBlock
                         MaxLines="1"
                         MaxWidth="320"
                         Text="{Binding SavePath}"
@@ -90,6 +93,39 @@
                         VerticalAlignment="Center" />
                     <Button Command="{Binding SetSavePathCommand}">选择文件夹</Button>
                 </StackPanel>
+            </Grid>
+        </Border>
+        <Border Classes="SettingCard">
+            <Grid ColumnDefinitions="Auto,*,Auto">
+                <StackPanel
+                    Grid.Column="0"
+                    Orientation="Horizontal"
+                    Spacing="8">
+                    <icon:FluentIcon
+                        Height="26"
+                        Icon="ArrowStepIn20Filled"
+                        Width="26" />
+                    <StackPanel
+                        Orientation="Vertical"
+                        Spacing="2"
+                        VerticalAlignment="Center">
+                        <TextBlock
+                            FontSize="16"
+                            FontWeight="Medium"
+                            Text="线程数量" />
+                        <TextBlock FontSize="12" Text="多线程的线程数,范围[1,100]" />
+                    </StackPanel>
+                </StackPanel>
+                <controls:NumberBox
+                    Grid.Column="2"
+                    Height="32"
+                    LargeChange="1"
+                    Maximum="100"
+                    Minimum="1"
+                    SmallChange="1"
+                    SpinButtonPlacementMode="Compact"
+                    Value="{Binding Parallel, Mode=TwoWay}"
+                    Width="100" />
             </Grid>
         </Border>
     </StackPanel>

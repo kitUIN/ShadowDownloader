@@ -1,12 +1,11 @@
-﻿
-using Newtonsoft.Json;
-using ShadowDownloader.Response;
+﻿using Newtonsoft.Json;
 
 namespace ShadowDownloader;
 
 public class Configuration
 {
     private const string Name = "Configuration.json";
+
     /// <summary>
     /// 保存位置
     /// </summary>
@@ -22,14 +21,32 @@ public class Configuration
     /// </summary>
     public long MinBlockSize { get; set; }
 
+    private string? _proxies;
+
     /// <summary>
     /// 代理
     /// </summary>
-    public string Proxies { get; set; }
+    public string? Proxies
+    {
+        get => _proxies;
+        set
+        {
+            _proxies = value;
+            if (value is "" or null)
+            {
+                DownloadUtil.ClearProxy();
+            }
+            else
+            {
+                DownloadUtil.SetProxy(new Uri(value));
+            }
+        }
+    }
 
-    
+
     public int TaskId { get; set; }
-    public Configuration(string savePath,int parallel,long minBlockSize,string proxies)
+
+    public Configuration(string savePath, int parallel, long minBlockSize, string proxies)
     {
         SavePath = savePath;
         Parallel = parallel;
@@ -45,13 +62,14 @@ public class Configuration
 
     public void Save()
     {
-        File.WriteAllText(Name,JsonConvert.SerializeObject(this));
+        File.WriteAllText(Name, JsonConvert.SerializeObject(this));
     }
+
     public Task SaveAsync()
     {
-        return File.WriteAllTextAsync(Name,JsonConvert.SerializeObject(this));
+        return File.WriteAllTextAsync(Name, JsonConvert.SerializeObject(this));
     }
-    
+
     private static Configuration Load()
     {
         if (File.Exists(Name))
@@ -65,7 +83,7 @@ public class Configuration
 
         var downloadPath = Path.Combine(Directory.GetCurrentDirectory(), "downloads");
         if (!Directory.Exists(downloadPath)) Directory.CreateDirectory(downloadPath);
-        return new Configuration(downloadPath, 
+        return new Configuration(downloadPath,
             10, 1L * 1024 * 1024, "");
     }
 }
