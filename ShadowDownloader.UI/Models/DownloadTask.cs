@@ -25,6 +25,8 @@ public class DownloadTask : ReactiveObject
         set => this.RaiseAndSetIfChanged(ref _name, value);
     }
 
+    public string Path { get; set; }
+
     private int _parallel;
 
     public int Parallel
@@ -183,7 +185,9 @@ public class DownloadTask : ReactiveObject
             Parallel = Parallel,
             Percent = Percent,
             Received = Received,
+            AdapterId = AdapterId,
             Size = Size,
+            Path = Path,
             Status = Status,
         }).ExecuteCommandAsync();
     }

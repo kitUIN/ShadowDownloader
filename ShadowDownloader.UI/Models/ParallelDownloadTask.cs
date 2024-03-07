@@ -33,28 +33,27 @@ public class ParallelDownloadTask : DownloadTask
             : parallelDownloadTask.Status;
     }
 
-    private int _dbId;
 
     public new async Task SaveDbAsync()
     {
-        var dbTask = await DbClient.Db.Storageable(new DbParallelDownloadTask
+        await DbClient.Db.Storageable(new DbParallelDownloadTask
         {
-            Id = _dbId,
+            Id = $"{TaskId}-{ParallelId}",
             TaskId = TaskId,
             ParallelId = ParallelId,
+            AdapterId = AdapterId,
             Percent = Percent,
             Received = Received,
             Size = Size,
             Status = Status,
-        }).DefaultAddElseUpdate().ExecuteReturnEntityAsync();
-        _dbId = dbTask.Id;
+        }).ExecuteCommandAsync();
     }
 
     public new async Task RemoveDbAsync()
     {
         await DbClient.Db.Deleteable(new DbParallelDownloadTask
         {
-            Id = _dbId
+            Id = $"{TaskId}-{ParallelId}"
         }).ExecuteCommandAsync();
     }
 }

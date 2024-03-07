@@ -7,11 +7,13 @@ namespace ShadowDownloader.UI.Views;
 
 public partial class MainWindow : Window
 {
+    public static MainWindow Current { get; private set; }
+
     public MainWindow()
     {
         InitializeComponent();
-
         MainWindowViewModel.TaskDialogShowed += OnTaskDialogShowed;
+        Current = this;
     }
 
     private async void OnTaskDialogShowed(object? sender, string e)

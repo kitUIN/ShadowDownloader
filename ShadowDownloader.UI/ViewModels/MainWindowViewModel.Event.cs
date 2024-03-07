@@ -1,4 +1,7 @@
 ﻿using System;
+using System.IO;
+using System.Linq;
+using System.Threading.Tasks;
 using Serilog;
 using ShadowDownloader.Arg;
 using ShadowDownloader.Enum;
@@ -33,13 +36,12 @@ public partial class MainWindowViewModel
         CheckFiles.CollectionChanged += (_, _) => CheckFileCount = CheckFiles.Count > 0;
     }
 
-    private async void OnParallelDownloadProcessChanged(object? sender, ParallelDownloadProcessArg e)
+    private void OnParallelDownloadProcessChanged(object? sender, ParallelDownloadProcessArg e)
     {
         if (GetParallelDownloadTask(e.TaskId, e.ParallelId) is { } pTask)
         {
             pTask.Percent = e.Progress;
             pTask.Received = e.Received;
-            await pTask.SaveDbAsync();
         }
     }
 
@@ -48,11 +50,9 @@ public partial class MainWindowViewModel
         if (GetDownloadTask(e.TaskId) is { } task)
         {
             task.Speed = e.Speed;
-            await task.SaveDbAsync();
-            foreach (var pTask in task.Siblings)
-            {
-                await pTask.SaveDbAsync();
-            }
+            var tasks = task.Siblings.Select(pTask => pTask.SaveDbAsync()).ToList();
+            tasks.Add(task.SaveDbAsync());
+            await Task.WhenAll(tasks);
         }
     }
 
@@ -80,8 +80,35 @@ public partial class MainWindowViewModel
     private async void OnDownloadStatusChanged(object? sender, DownloadStatusArg e)
     {
         Log.Information("下载任务[Task {TaskId}| Parallel 000] 当前状态: {Status}", e.TaskId, e.Status);
-        if (e.Status != DownloadStatus.Pending && GetDownloadTask(e.TaskId) is { } task)
+        if (GetDownloadTask(e.TaskId) is { } task)
         {
+            switch (e.Status)
+            {
+                case DownloadStatus.Pending:
+                    return;
+                case DownloadStatus.Completed:
+                    try
+                    {
+                        var newFile = task.Path;
+                        var oldFile = newFile + $".tmp{task.TaskId}";
+                        File.Move(oldFile, newFile);
+                    }
+                    catch (Exception exception)
+                    {
+                        Log.Error("下载任务[Task {TaskId}| Parallel 000] 错误:{E}", e.TaskId, exception);
+                        task.Status = DownloadStatus.Error;
+                        await task.SaveDbAsync();
+                    }
+
+                    break;
+                case DownloadStatus.Running:
+                    break;
+                case DownloadStatus.Pausing:
+                    break;
+                case DownloadStatus.Error:
+                    break;
+            }
+
             task.Status = e.Status;
             await task.SaveDbAsync();
             Log.Information("下载任务[Task {TaskId}| Parallel 000] 保存状态: {Status}", e.TaskId, e.Status);

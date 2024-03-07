@@ -94,6 +94,20 @@ public static class DownloadUtil
         return new CheckParallelResult(accept == "bytes", response.Content.Headers.ContentLength);
     }
 
+    private static string GetTaskFileNewName(string savePath, string path)
+    {
+        path = Path.Combine(savePath, path);
+        var name = path;
+        var i = 0;
+        while (File.Exists(name))
+        {
+            name = Path.Combine(savePath,
+                Path.GetFileNameWithoutExtension(path) + $"({++i})" + Path.GetExtension(path));
+        }
+
+        return name;
+    }
+
     public static async Task<DownloadTaskRecord> DownloadWithParallel(string link, long length, string name,
         string savePath,
         Configuration config,
@@ -103,7 +117,8 @@ public static class DownloadUtil
         var source = new CancellationTokenSource();
         var taskId = ++config.TaskId;
         await config.SaveAsync();
-        var filePath = Path.Combine(savePath, name + ".tmp");
+        var path = Path.Combine(savePath, GetTaskFileNewName(savePath, name));
+        var filePath = path + $".tmp{taskId}";
         var status = new DownloadStatusArg(taskId, DownloadStatus.Running, name, length);
         var tasks = new List<Task>();
         var parallel = config.Parallel; // 线程数
@@ -178,7 +193,7 @@ public static class DownloadUtil
         }
 
         tasks.Add(new Task(SpeedAction, source.Token));
-        return new DownloadTaskRecord(taskId, parallel, name, length, parallelSizeList, source, tasks);
+        return new DownloadTaskRecord(taskId, parallel, name, length, path, parallelSizeList, source, tasks);
 
         async void SpeedAction()
         {
@@ -280,7 +295,7 @@ public static class DownloadUtil
         return str;
     }
 
-    public record DownloadTaskRecord(int TaskId, int Parallel, string Name, long Size,
+    public record DownloadTaskRecord(int TaskId, int Parallel, string Name, long Size, string Path,
         List<long> ParallelSizeList,
         CancellationTokenSource TokenSource, List<Task> ScheduleTasks);
 }

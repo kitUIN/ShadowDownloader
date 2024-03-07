@@ -5,8 +5,7 @@ namespace ShadowDownloader.UI.Models;
 
 public class DbParallelDownloadTask
 {
-    [SugarColumn(IsPrimaryKey = true, IsIdentity = true)]
-    public int Id { get; set; }
+    [SugarColumn(IsPrimaryKey = true)] public string Id { get; set; }
 
     public int TaskId { get; set; }
     public string AdapterId { get; set; } = "";
