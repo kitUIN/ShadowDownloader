@@ -42,7 +42,7 @@ jobs:
     - name: Upload Artifacts
       uses: actions/upload-artifact@master
       with:
-        name: ShadowDownloader
+        name: ShadowDownloader.win64
         path: 'D:\a\ShadowDownloader\ShadowDownloader\ShadowDownloader.UI\bin\Release\net6.0\win-x64\publish\'
 
   
