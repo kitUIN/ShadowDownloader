@@ -12,13 +12,13 @@ jobs:
       nbgv: ${{ steps.nbgv.outputs.SemVer2 }}
     steps:
     - name: Checkout
-      uses: actions/checkout@v2
+      uses: actions/checkout@v4
       with:
         fetch-depth: 0
         submodules: 'recursive'
 
     - name: Install .NET
-      uses: actions/setup-dotnet@v1
+      uses: actions/setup-dotnet@v4
       with:
         dotnet-version: 6.0.*
 
@@ -32,12 +32,12 @@ jobs:
       run: dotnet restore
 
     - name: Add MSBuild to PATH
-      uses: microsoft/setup-msbuild@v1
+      uses: microsoft/setup-msbuild@v2
 
     - name: Build
       run: |
         cd ShadowDownloader.UI
-        dotnet publish -c Release -r win-x64 /p:PublishSingleFile=true /p:PublishTrimmed=true /p:PublishReadyToRun=false /p:PublishReadyToRunShowWarnings=true /p:UseAppHost=true /p:PublishSingleFile=true /p:IncludeNativeLibrariesForSelfExtract=true /p:SelfContained=true --self-contained true
+        dotnet publish -nowarn:cs8618,cs8602 -c Release -r win-x64 /p:PublishSingleFile=true /p:PublishTrimmed=true /p:PublishReadyToRun=false /p:PublishReadyToRunShowWarnings=true /p:UseAppHost=true /p:PublishSingleFile=true /p:IncludeNativeLibrariesForSelfExtract=true /p:SelfContained=true --self-contained true
 
     - name: Upload Artifacts
       uses: actions/upload-artifact@master
