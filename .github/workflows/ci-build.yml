@@ -37,7 +37,7 @@ jobs:
     - name: Build
       run: |
         cd ShadowDownloader.UI
-        dotnet publish -nowarn:cs8618,cs8602 -c Release -r win-x64 /p:PublishSingleFile=true /p:PublishTrimmed=true /p:PublishReadyToRun=false /p:PublishReadyToRunShowWarnings=true /p:UseAppHost=true /p:PublishSingleFile=true /p:IncludeNativeLibrariesForSelfExtract=true /p:SelfContained=true --self-contained true
+        dotnet publish -nowarn:cs8618,il2057,cs8602 -c Release -r win-x64 /p:PublishSingleFile=true /p:PublishTrimmed=true /p:PublishReadyToRun=false /p:PublishReadyToRunShowWarnings=true /p:UseAppHost=true /p:PublishSingleFile=true /p:IncludeNativeLibrariesForSelfExtract=true /p:SelfContained=true --self-contained true
 
     - name: Upload Artifacts
       uses: actions/upload-artifact@master
