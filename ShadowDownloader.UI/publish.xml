@@ -1,0 +1,13 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Publish xmlns="https://github.com/avaloniaui">
+    <Executables>
+        <Executable Identifier="ShadowDownloader"
+                    MainClass="ShadowDownloader.Program"
+                    OutputName="ShadowDownloader"/>
+    </Executables>
+    <VersionInfo CompanyName="kitUIN"
+                 Description="多线程下载器"
+                 ProductName="ShadowDownloader"
+                 AssemblyVersion="1.0.0"
+                 FileVersion="1.0.0"/>
+</Publish>
