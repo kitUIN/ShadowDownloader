@@ -47,4 +47,5 @@ jobs:
       with:
         tag_name: '0.1.0'
         files: ShadowDownloader.win64.zip
-  
+      env:
+        GITHUB_TOKEN: ${{ secrets.TOKEN }}
