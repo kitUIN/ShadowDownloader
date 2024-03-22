@@ -1,9 +1,8 @@
-using System.Diagnostics;
 using Avalonia;
 using Avalonia.Controls.ApplicationLifetimes;
 using Avalonia.Markup.Xaml;
-using Avalonia.Styling;
 using Serilog;
+using ShadowDownloader.Adapter;
 using ShadowDownloader.UI.Models;
 using ShadowDownloader.UI.ViewModels;
 using ShadowDownloader.UI.Views;
@@ -26,10 +25,13 @@ public partial class App : Application
         DbClient.Db.CodeFirst.InitTables<DbDownloadTask>();
         DbClient.Db.CodeFirst.InitTables<DbParallelDownloadTask>();
     }
-    public static ShadowDownloader Downloader { get; }= new ();
+
+    public static ShadowDownloader Downloader { get; } = new();
+
     public override void OnFrameworkInitializationCompleted()
     {
         Downloader.AddAdapter(new CowAdapter());
+        Downloader.AddAdapter(new UrlAdapter());
         InitDb();
         if (ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)
         {
@@ -38,7 +40,7 @@ public partial class App : Application
                 DataContext = new MainWindowViewModel(),
             };
         }
-        
-        base.OnFrameworkInitializationCompleted(); 
+
+        base.OnFrameworkInitializationCompleted();
     }
 }

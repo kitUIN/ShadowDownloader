@@ -68,7 +68,11 @@
                 Grid.Row="0"
                 IsOpen="True">
                 <ui:CommandBar.PrimaryCommands>
-                    <ui:CommandBarButton Label="新下载.." Tag="base">
+                    <ui:CommandBarButton
+                        Command="{Binding ShowAddUrlCommand}"
+                        CommandParameter="{Binding Path=Tag, RelativeSource={RelativeSource Mode=Self}}"
+                        Label="新下载.."
+                        Tag="url">
                         <ui:CommandBarButton.IconSource>
                             <icon:FluentIconSource Icon="AddCircle24Regular" />
                         </ui:CommandBarButton.IconSource>
