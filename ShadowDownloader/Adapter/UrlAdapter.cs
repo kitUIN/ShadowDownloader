@@ -1,4 +1,5 @@
-﻿using ShadowDownloader.Model;
+﻿using System.Web;
+using ShadowDownloader.Model;
 
 namespace ShadowDownloader.Adapter;
 
@@ -22,7 +23,7 @@ public class UrlAdapter : IAdapter
         try
         {
             var uri = new Uri(result.Link);
-            name = Path.GetFileName(uri.AbsolutePath);
+            name = HttpUtility.UrlDecode(Path.GetFileName(uri.AbsolutePath));
         }
         catch (Exception)
         {
