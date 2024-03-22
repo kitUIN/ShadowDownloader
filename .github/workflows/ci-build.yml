@@ -45,5 +45,6 @@ jobs:
       uses: softprops/action-gh-release@v2
       # if: startsWith(github.ref, 'refs/tags/')
       with:
+        tag_name: 'Test0.1'
         files: ShadowDownloader.win64.zip
   
