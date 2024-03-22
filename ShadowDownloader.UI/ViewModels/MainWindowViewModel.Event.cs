@@ -51,7 +51,7 @@ public partial class MainWindowViewModel
         {
             task.Speed = e.Speed;
             var tasks = task.Siblings
-                .Where(x => x.Status != DownloadStatus.Completed)
+                .Where(x => x.Status == DownloadStatus.Running)
                 .Select(pTask => pTask.SaveDbAsync())
                 .ToList();
             tasks.Add(task.SaveDbAsync());

@@ -177,9 +177,15 @@ public class DownloadTask : ReactiveObject
             var referer = string.IsNullOrEmpty(Referer) ? null : new Uri(Referer);
             var taskRecord = DownloadUtil.RetryDownloadWithParallel(Link, Size, Name, SavePath, referer, null,
                 Siblings[0].Size, TaskId, Siblings.Select(sibling => sibling.Received).ToList());
+            Path = taskRecord.Path;
             taskRecord.ScheduleTasks.StartAll();
             CancellationTokenSource = taskRecord.TokenSource;
         }
+    }
+
+    public void Pause()
+    {
+        CancellationTokenSource?.Cancel();
     }
 
     private void CheckStatus()
@@ -188,7 +194,7 @@ public class DownloadTask : ReactiveObject
         {
             // 正在运行则取消
             case DownloadStatus.Running:
-                CancellationTokenSource?.Cancel();
+                Pause();
                 Status = DownloadStatus.Pausing;
                 break;
             // 失败则重试
@@ -227,6 +233,8 @@ public class DownloadTask : ReactiveObject
             Path = Path,
             Status = Status,
             Link = Link,
+            SavePath = SavePath,
+            Referer = Referer,
             CanParallel = CanParallel
         }).ExecuteCommandAsync();
     }
