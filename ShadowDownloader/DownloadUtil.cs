@@ -158,7 +158,7 @@ public static class DownloadUtil
                     parallelNow += bytesRead;
                     ParallelDownloadProcessChanged?.Invoke(sender,
                         new ParallelDownloadProcessArg(taskId, parallelId, length, parallelNow));
-                    DownloadProcessChanged?.Invoke(sender, new DownloadProcessArg(taskId, length, downloadNow));
+                    DownloadProcessChanged?.Invoke(sender, new DownloadProcessArg(taskId, length, downloadNow, false));
                 }
 
                 parallelStatus.SetStatus(DownloadStatus.Completed);
@@ -274,7 +274,8 @@ public static class DownloadUtil
                         parallelNow += bytesRead;
                         ParallelDownloadProcessChanged?.Invoke(sender,
                             new ParallelDownloadProcessArg(taskId, parallelId, parallelSize, parallelNow));
-                        DownloadProcessChanged?.Invoke(sender, new DownloadProcessArg(taskId, length, downloadNow));
+                        DownloadProcessChanged?.Invoke(sender,
+                            new DownloadProcessArg(taskId, length, downloadNow, false));
                     }
 
                     parallelStatus.SetStatus(DownloadStatus.Completed);

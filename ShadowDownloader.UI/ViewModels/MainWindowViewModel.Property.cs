@@ -1,6 +1,5 @@
 ﻿using System.Collections.ObjectModel;
 using ReactiveUI;
-using ShadowDownloader.Model;
 using ShadowDownloader.UI.Models;
 
 namespace ShadowDownloader.UI.ViewModels;
@@ -24,12 +23,12 @@ public partial class MainWindowViewModel
 
     #region 检查需要下载的文件列表
 
-    private ObservableCollection<CheckFileResult> _checkFiles = new();
+    private ObservableCollection<ObservableCheckFileResult> _checkFiles = new();
 
     /// <summary>
     /// 检查需要下载的文件列表
     /// </summary>
-    public ObservableCollection<CheckFileResult> CheckFiles
+    public ObservableCollection<ObservableCheckFileResult> CheckFiles
     {
         get => _checkFiles;
         set => this.RaiseAndSetIfChanged(ref _checkFiles, value);
@@ -97,5 +96,22 @@ public partial class MainWindowViewModel
 
     #endregion
 
+    private bool _isRename;
+
+    public bool IsRename
+    {
+        get => _isRename;
+        set => this.RaiseAndSetIfChanged(ref _isRename, value);
+    }
+
+    private string _reNameOldName;
+
+    public string ReNameName
+    {
+        get => _reNameOldName;
+        set => this.RaiseAndSetIfChanged(ref _reNameOldName, value);
+    }
+
     private string _currentId = "";
+    public ObservableCheckFileResult ReNameFile { get; set; }
 }

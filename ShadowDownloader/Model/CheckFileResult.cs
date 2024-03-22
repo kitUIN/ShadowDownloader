@@ -3,7 +3,7 @@
 public class CheckFileResult
 {
     public string Id { get; }
-    public string Name { get; }
+    public string Name { get; set; }
     public string Link { get; }
     public string Path { get; }
     public bool CanParallel { get; }

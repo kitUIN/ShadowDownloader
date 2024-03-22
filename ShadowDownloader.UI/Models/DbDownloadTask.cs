@@ -13,6 +13,6 @@ public class DbDownloadTask
     public double Percent { get; set; }
     public long Size { get; set; }
     public long Received { get; set; }
-
+    public bool CanParallel { get; set; }
     public DownloadStatus Status { get; set; }
 }

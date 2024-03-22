@@ -1,6 +1,8 @@
 using Avalonia.Controls;
 using Avalonia.Interactivity;
+using FluentAvalonia.UI.Controls;
 using ShadowDownloader.UI.Converter;
+using ShadowDownloader.UI.Models;
 using ShadowDownloader.UI.ViewModels;
 
 namespace ShadowDownloader.UI.Views;
@@ -31,6 +33,19 @@ public partial class MainWindow : Window
         if (DataContext is MainWindowViewModel vm)
         {
             vm.CheckFileSelectedItems = ListNotNullConverter.CheckIList(CheckFileListBox.SelectedItems);
+        }
+    }
+
+    private void Button_OnClick(object? sender, RoutedEventArgs e)
+    {
+        if (DataContext is MainWindowViewModel vm)
+        {
+            if (sender is HyperlinkButton { Tag: ObservableCheckFileResult result })
+            {
+                vm.ReNameFile = result;
+                vm.ReNameName = result.Name;
+                vm.IsRename = true;
+            }
         }
     }
 }

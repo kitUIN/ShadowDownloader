@@ -39,7 +39,8 @@ public partial class MainWindowViewModel : ViewModelBase
         foreach (var fcr in await App.Downloader.CheckFile(id, result))
         {
             IsVisibleInCheckFile = false;
-            CheckFiles.Add(fcr);
+            CheckFiles.Add(new ObservableCheckFileResult(fcr.Id, fcr.Name, fcr.Link, fcr.Path, fcr.CanParallel,
+                fcr.Size, fcr.Extra));
         }
     }
 

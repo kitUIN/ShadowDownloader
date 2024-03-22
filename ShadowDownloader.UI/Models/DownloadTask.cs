@@ -83,6 +83,14 @@ public class DownloadTask : ReactiveObject
         }
     }
 
+    private bool _canParallel;
+
+    public bool CanParallel
+    {
+        get => _canParallel;
+        set => this.RaiseAndSetIfChanged(ref _canParallel, value);
+    }
+
     private ObservableCollection<ParallelDownloadTask> _siblings = new();
 
     public ObservableCollection<ParallelDownloadTask> Siblings
@@ -94,7 +102,7 @@ public class DownloadTask : ReactiveObject
     public string AdapterId { get; protected set; } = "";
 
     public DownloadTask(int taskId, string name, long size, string adapterId, int parallel = 0,
-        CancellationTokenSource? source = null
+        CancellationTokenSource? source = null, bool canParallel = true
     )
     {
         TaskId = taskId;
@@ -103,6 +111,7 @@ public class DownloadTask : ReactiveObject
         Parallel = parallel;
         CancellationTokenSource = source;
         AdapterId = adapterId;
+        CanParallel = canParallel;
     }
 
     public DownloadTask(DbDownloadTask dbDownloadTask)
@@ -114,6 +123,7 @@ public class DownloadTask : ReactiveObject
         Percent = dbDownloadTask.Percent;
         Received = dbDownloadTask.Received;
         AdapterId = dbDownloadTask.AdapterId;
+        CanParallel = dbDownloadTask.CanParallel;
         Status = dbDownloadTask.Status == DownloadStatus.Running ? DownloadStatus.Pausing : dbDownloadTask.Status;
         CancellationTokenSource = new CancellationTokenSource();
     }
@@ -189,6 +199,7 @@ public class DownloadTask : ReactiveObject
             Size = Size,
             Path = Path,
             Status = Status,
+            CanParallel = CanParallel
         }).ExecuteCommandAsync();
     }
 

@@ -1,6 +1,4 @@
-﻿using System.Diagnostics;
-
-namespace ShadowDownloader.Arg;
+﻿namespace ShadowDownloader.Arg;
 
 public class DownloadProcessArg
 {
@@ -24,11 +22,14 @@ public class DownloadProcessArg
      */
     public long Received { get; }
 
-    public DownloadProcessArg(int taskId, long total, long received)
+    public bool CanParallel { get; }
+
+    public DownloadProcessArg(int taskId, long total, long received, bool canParallel = true)
     {
         TaskId = taskId;
         Total = total;
         Received = received;
+        CanParallel = canParallel;
         Progress = Math.Round((received / (double)total * 100), 2);
     }
 }

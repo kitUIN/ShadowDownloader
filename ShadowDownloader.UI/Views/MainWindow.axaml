@@ -14,7 +14,6 @@
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:icon="using:FluentAvalonia.FluentIcons"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-    xmlns:model="clr-namespace:ShadowDownloader.Model;assembly=ShadowDownloader"
     xmlns:models="clr-namespace:ShadowDownloader.UI.Models"
     xmlns:ui="using:FluentAvalonia.UI.Controls"
     xmlns:vm="using:ShadowDownloader.UI.ViewModels"
@@ -34,22 +33,39 @@
         <converter:TaskPlayTipConverter x:Key="TaskPlayTipConverter" />
         <converter:TaskSpeedEnableConverter x:Key="TaskSpeedEnableConverter" />
         <converter:ListNotNullConverter x:Key="ListNotNullConverter" />
+        <converter:CanParallelIconConverter x:Key="CanParallelIconConverter" />
+        <converter:CanParallelITipConverter x:Key="CanParallelITipConverter" />
 
-        <DataTemplate x:DataType="model:CheckFileResult" x:Key="CheckFileTemplate">
-            <Grid Margin="5">
-                <Grid RowDefinitions="*,*">
+        <DataTemplate x:DataType="models:ObservableCheckFileResult" x:Key="CheckFileTemplate">
+            <Grid ColumnDefinitions="Auto,6,*,Auto" Margin="5">
+                <icon:FluentIcon
+                    Grid.Column="0"
+                    Height="32"
+                    Icon="{Binding CanParallel, Converter={StaticResource CanParallelIconConverter}}"
+                    ToolTip.Tip="{Binding CanParallel, Converter={StaticResource CanParallelITipConverter}}"
+                    Width="32" />
+                <Grid Grid.Column="2" RowDefinitions="*,*">
                     <TextBlock
                         FontSize="15"
                         FontWeight="Bold"
                         Grid.Row="0"
-                        Text="{Binding Name}" />
+                        Text="{Binding ShowName}" />
                     <TextBlock
                         FontSize="13"
                         Foreground="Gray"
                         Grid.Row="1"
                         Text="{Binding SizeString}" />
                 </Grid>
-
+                <ui:HyperlinkButton
+                    Click="Button_OnClick"
+                    Grid.Column="3"
+                    Tag="{Binding}"
+                    ToolTip.Tip="重命名">
+                    <icon:FluentIcon
+                        Height="20"
+                        Icon="Rename24Regular"
+                        Width="20" />
+                </ui:HyperlinkButton>
             </Grid>
 
         </DataTemplate>
@@ -282,6 +298,27 @@
                             IsVisible="{Binding IsVisibleInCheckFile, Mode=OneWay}"
                             VerticalAlignment="Center"
                             Width="50" />
+                    </Grid>
+                    <Grid
+                        ColumnDefinitions="Auto,*,Auto"
+                        Grid.Row="1"
+                        IsVisible="{Binding IsRename}">
+                        <TextBlock
+                            Grid.Column="0"
+                            Margin="0,0,10,0"
+                            Text="重命名:"
+                            VerticalAlignment="Center" />
+                        <TextBox Grid.Column="1" Text="{Binding ReNameName, Mode=TwoWay}" />
+                        <Button
+                            Command="{Binding RenameCommand}"
+                            Grid.Column="2"
+                            Margin="10,0,0,0"
+                            VerticalAlignment="Center">
+                            <icon:FluentIcon
+                                Height="16"
+                                Icon="Checkmark24Filled"
+                                Width="16" />
+                        </Button>
                     </Grid>
                 </Grid>
             </ui:TaskDialog.Content>

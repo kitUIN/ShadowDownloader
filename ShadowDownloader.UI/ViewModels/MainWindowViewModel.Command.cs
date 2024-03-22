@@ -55,6 +55,15 @@ public partial class MainWindowViewModel
         await dialog.ShowAsync();
     }
 
+    public ReactiveCommand<Unit, Unit> RenameCommand =>
+        ReactiveCommand.Create(Rename);
+
+    private void Rename()
+    {
+        ReNameFile.ShowName = ReNameName;
+        IsRename = false;
+    }
+
     public ReactiveCommand<Unit, Unit> DownloadAllCommand =>
         ReactiveCommand.CreateFromTask(DownloadAllFileAsync);
 
