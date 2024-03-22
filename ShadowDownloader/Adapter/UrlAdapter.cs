@@ -12,7 +12,7 @@ public class UrlAdapter : IAdapter
 
     public CheckUrlResult CheckUrl(string url)
     {
-        return new CheckUrlResult(Id, true, url, url, null, "");
+        return new CheckUrlResult(Id, true, url, url);
     }
 
     public async Task<List<CheckFileResult>> CheckFile(CheckUrlResult result, string savePath)
@@ -24,7 +24,7 @@ public class UrlAdapter : IAdapter
             var uri = new Uri(result.Link);
             name = Path.GetFileName(uri.AbsolutePath);
         }
-        catch (Exception ignored)
+        catch (Exception)
         {
             // ignored
         }
@@ -36,7 +36,13 @@ public class UrlAdapter : IAdapter
 
     public async Task<DownloadUtil.DownloadTaskRecord> Download(CheckFileResult result, Configuration config)
     {
-        return await DownloadUtil.DownloadWithParallel(result.Link, result.Size,
+        if (result.CanParallel)
+        {
+            return await DownloadUtil.DownloadWithParallel(result.Link, result.Size,
+                result.Name, result.Path, config, null, this);
+        }
+
+        return await DownloadUtil.DownloadWithSingle(result.Link, result.Size,
             result.Name, result.Path, config, null, this);
     }
 }

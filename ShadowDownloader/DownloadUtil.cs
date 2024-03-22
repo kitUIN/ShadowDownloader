@@ -62,6 +62,13 @@ public static class DownloadUtil
         return response;
     }
 
+    private static async Task<HttpResponseMessage> SingleGet(string url, Uri? referer)
+    {
+        using var request = new HttpRequestMessage(HttpMethod.Get, url);
+        if (referer != null) request.Headers.Referrer = referer;
+        return await SendAsync(request);
+    }
+
     private static async Task<HttpResponseMessage> ParallelGet(string url, RangeHeaderValue range, Uri? referer)
     {
         using var request = new HttpRequestMessage(HttpMethod.Get, url);
@@ -106,6 +113,102 @@ public static class DownloadUtil
         }
 
         return name;
+    }
+
+    public static async Task<DownloadTaskRecord> DownloadWithSingle(string link, long length, string name,
+        string savePath,
+        Configuration config,
+        Uri? referer, object? sender)
+    {
+        var source = new CancellationTokenSource();
+        var taskId = ++config.TaskId;
+        await config.SaveAsync();
+        var path = Path.Combine(savePath, GetTaskFileNewName(savePath, name));
+        var filePath = path + $".tmp{taskId}";
+        var status = new DownloadStatusArg(taskId, DownloadStatus.Running, name, length);
+        var tasks = new List<Task>();
+        var downloadNow = 0L; // 当前下载已接收
+        var parallelId = 1;
+        var parallelNow = 0L;
+        var parallelStatus =
+            new ParallelDownloadStatusArg(taskId, parallelId, DownloadStatus.Pending, name, length);
+        ParallelDownloadStatusChanged?.Invoke(sender, parallelStatus);
+
+        tasks.Add(new Task(ParallelDownloadAction, source.Token));
+        tasks.Add(new Task(SpeedAction, source.Token));
+        return new DownloadTaskRecord(taskId, 1, name, length, path, new List<long> { length }, source, tasks);
+
+        async void ParallelDownloadAction()
+        {
+            try
+            {
+                parallelStatus.SetStatus(DownloadStatus.Running);
+                ParallelDownloadStatusChanged?.Invoke(sender, parallelStatus);
+                var res = await SingleGet(link, referer);
+                await using var stream = await res.Content.ReadAsStreamAsync(source.Token);
+                await using var fs = new FileStream(filePath, FileMode.OpenOrCreate, FileAccess.Write,
+                    FileShare.Write);
+                var buffer = new byte[1024 * 128]; // 每128K汇报一次
+                int bytesRead;
+                fs.Seek(0, SeekOrigin.Begin);
+                while ((bytesRead = await stream.ReadAsync(buffer.AsMemory(0, buffer.Length), source.Token)) > 0)
+                {
+                    await fs.WriteAsync(buffer.AsMemory(0, bytesRead), source.Token);
+                    downloadNow += bytesRead;
+                    parallelNow += bytesRead;
+                    ParallelDownloadProcessChanged?.Invoke(sender,
+                        new ParallelDownloadProcessArg(taskId, parallelId, length, parallelNow));
+                    DownloadProcessChanged?.Invoke(sender, new DownloadProcessArg(taskId, length, downloadNow));
+                }
+
+                parallelStatus.SetStatus(DownloadStatus.Completed);
+                ParallelDownloadStatusChanged?.Invoke(sender, parallelStatus);
+            }
+            catch (TaskCanceledException)
+            {
+                Log.Error("[Task {TaskId}| Parallel {ParallelId:000}] 任务取消", taskId, parallelId);
+                parallelStatus.SetStatus(DownloadStatus.Pausing);
+                ParallelDownloadStatusChanged?.Invoke(sender, parallelStatus);
+            }
+            catch (Exception ex)
+            {
+                Log.Error(ex, "[Task {TaskId}| Parallel {ParallelId:000}]", taskId, parallelId);
+                parallelStatus.SetStatus(DownloadStatus.Error);
+                ParallelDownloadStatusChanged?.Invoke(sender, parallelStatus);
+            }
+        }
+
+        async void SpeedAction()
+        {
+            try
+            {
+                status.SetStatus(DownloadStatus.Running);
+                DownloadStatusChanged?.Invoke(sender, status);
+                var last = downloadNow;
+                while (last < length)
+                {
+                    await Task.Delay(1000, source.Token);
+                    var speed = (downloadNow - last);
+                    DownloadSpeedChanged?.Invoke(sender, new DownloadSpeedArg(taskId, speed));
+                    last = downloadNow;
+                }
+
+                status.SetStatus(DownloadStatus.Completed);
+                DownloadStatusChanged?.Invoke(sender, status);
+            }
+            catch (TaskCanceledException)
+            {
+                Log.Error("[Task {TaskId}| Parallel 000] 任务取消", taskId);
+                status.SetStatus(DownloadStatus.Pausing);
+                DownloadStatusChanged?.Invoke(sender, status);
+            }
+            catch (Exception ex)
+            {
+                Log.Error(ex, "[Task {TaskId}| Parallel 000]", taskId);
+                status.SetStatus(DownloadStatus.Error);
+                DownloadStatusChanged?.Invoke(sender, status);
+            }
+        }
     }
 
     public static async Task<DownloadTaskRecord> DownloadWithParallel(string link, long length, string name,
@@ -183,7 +286,7 @@ public static class DownloadUtil
                     parallelStatus.SetStatus(DownloadStatus.Pausing);
                     ParallelDownloadStatusChanged?.Invoke(sender, parallelStatus);
                 }
-                catch (System.Exception ex)
+                catch (Exception ex)
                 {
                     Log.Error(ex, "[Task {TaskId}| Parallel {ParallelId:000}]", taskId, parallelId);
                     parallelStatus.SetStatus(DownloadStatus.Error);
@@ -219,7 +322,7 @@ public static class DownloadUtil
                 status.SetStatus(DownloadStatus.Pausing);
                 DownloadStatusChanged?.Invoke(sender, status);
             }
-            catch (System.Exception ex)
+            catch (Exception ex)
             {
                 Log.Error(ex, "[Task {TaskId}| Parallel 000]", taskId);
                 status.SetStatus(DownloadStatus.Error);
