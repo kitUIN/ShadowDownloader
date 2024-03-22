@@ -15,10 +15,11 @@ public partial class MainWindowViewModel : ViewModelBase
     /// <param name="adapterId">适配器Id</param>
     private void InitTask(DownloadUtil.DownloadTaskRecord taskRecord, string adapterId)
     {
-        var task = new DownloadTask(taskRecord.TaskId, taskRecord.Name, taskRecord.Size, adapterId, taskRecord.Parallel,
+        var task = new DownloadTask(taskRecord.TaskId, taskRecord.Name, taskRecord.Size, adapterId, taskRecord.Link,
+            taskRecord.SavePath, taskRecord.Referer, taskRecord.Parallel,
             taskRecord.TokenSource)
         {
-            Path = taskRecord.Path
+            Path = taskRecord.Path,
         };
         Tasks.Insert(0, task);
         Log.Information("[Task {TaskId}| Parallel 000]添加下载任务: {Name}, Size:{Size}B", task.TaskId, task.Name, task.Size);

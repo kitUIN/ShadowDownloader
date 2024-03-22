@@ -136,7 +136,8 @@ public static class DownloadUtil
 
         tasks.Add(new Task(ParallelDownloadAction, source.Token));
         tasks.Add(new Task(SpeedAction, source.Token));
-        return new DownloadTaskRecord(taskId, 1, name, length, path, new List<long> { length }, source, tasks);
+        return new DownloadTaskRecord(taskId, 1, name, length, path, new List<long> { length }, source, tasks, link,
+            savePath, referer is null ? "" : referer.AbsoluteUri);
 
         async void ParallelDownloadAction()
         {
@@ -297,7 +298,121 @@ public static class DownloadUtil
         }
 
         tasks.Add(new Task(SpeedAction, source.Token));
-        return new DownloadTaskRecord(taskId, parallel, name, length, path, parallelSizeList, source, tasks);
+        return new DownloadTaskRecord(taskId, parallel, name, length, path, parallelSizeList, source, tasks, link,
+            savePath, referer is null ? "" : referer.AbsoluteUri);
+
+        async void SpeedAction()
+        {
+            try
+            {
+                status.SetStatus(DownloadStatus.Running);
+                DownloadStatusChanged?.Invoke(sender, status);
+                var last = downloadNow;
+                while (last < length)
+                {
+                    await Task.Delay(1000, source.Token);
+                    var speed = (downloadNow - last);
+                    DownloadSpeedChanged?.Invoke(sender, new DownloadSpeedArg(taskId, speed));
+                    last = downloadNow;
+                }
+
+                status.SetStatus(DownloadStatus.Completed);
+                DownloadStatusChanged?.Invoke(sender, status);
+            }
+            catch (TaskCanceledException)
+            {
+                Log.Error("[Task {TaskId}| Parallel 000] 任务取消", taskId);
+                status.SetStatus(DownloadStatus.Pausing);
+                DownloadStatusChanged?.Invoke(sender, status);
+            }
+            catch (Exception ex)
+            {
+                Log.Error(ex, "[Task {TaskId}| Parallel 000]", taskId);
+                status.SetStatus(DownloadStatus.Error);
+                DownloadStatusChanged?.Invoke(sender, status);
+            }
+        }
+    }
+
+    public static DownloadTaskRecord RetryDownloadWithParallel(string link, long length, string name,
+        string savePath,
+        Uri? referer, object? sender, long parallelAvg, int taskId, List<long> parallelCurrentSizeList)
+    {
+        var parallelSizeList = new List<long>();
+        var source = new CancellationTokenSource();
+        var path = Path.Combine(savePath, GetTaskFileNewName(savePath, name));
+        var filePath = path + $".tmp{taskId}";
+        var status = new DownloadStatusArg(taskId, DownloadStatus.Running, name, length);
+        var tasks = new List<Task>();
+        var parallel = parallelCurrentSizeList.Count; // 线程数
+        var downloadNow = parallelCurrentSizeList.Sum(); // 当前下载已接收
+
+        for (var i = 0; i < parallel; i++)
+        {
+            var start = i * parallelAvg;
+            var end = start + parallelAvg;
+            if (i == parallel - 1)
+            {
+                end = length;
+            }
+
+            var parallelId = i + 1;
+            var parallelSize = end - start;
+            parallelSizeList.Add(parallelSize);
+            var parallelNow = parallelCurrentSizeList[i];
+            if (end == parallelNow) continue;
+            var parallelStatus =
+                new ParallelDownloadStatusArg(taskId, parallelId, DownloadStatus.Running, name, parallelSize);
+            ParallelDownloadStatusChanged?.Invoke(sender, parallelStatus);
+
+            tasks.Add(new Task(ParallelDownloadAction, source.Token));
+            continue;
+
+            async void ParallelDownloadAction()
+            {
+                try
+                {
+                    parallelStatus.SetStatus(DownloadStatus.Running);
+                    ParallelDownloadStatusChanged?.Invoke(sender, parallelStatus);
+                    var res = await ParallelGet(link, new RangeHeaderValue(start + parallelNow, end), referer);
+                    await using var stream = await res.Content.ReadAsStreamAsync(source.Token);
+                    await using var fs = new FileStream(filePath, FileMode.OpenOrCreate, FileAccess.Write,
+                        FileShare.Write);
+                    var buffer = new byte[1024 * 128]; // 每128K汇报一次
+                    int bytesRead;
+                    fs.Seek(start + parallelNow, SeekOrigin.Begin);
+                    while ((bytesRead = await stream.ReadAsync(buffer.AsMemory(0, buffer.Length), source.Token)) > 0)
+                    {
+                        await fs.WriteAsync(buffer.AsMemory(0, bytesRead), source.Token);
+                        downloadNow += bytesRead;
+                        parallelNow += bytesRead;
+                        ParallelDownloadProcessChanged?.Invoke(sender,
+                            new ParallelDownloadProcessArg(taskId, parallelId, parallelSize, parallelNow));
+                        DownloadProcessChanged?.Invoke(sender,
+                            new DownloadProcessArg(taskId, length, downloadNow));
+                    }
+
+                    parallelStatus.SetStatus(DownloadStatus.Completed);
+                    ParallelDownloadStatusChanged?.Invoke(sender, parallelStatus);
+                }
+                catch (TaskCanceledException)
+                {
+                    Log.Error("[Task {TaskId}| Parallel {ParallelId:000}] 任务取消", taskId, parallelId);
+                    parallelStatus.SetStatus(DownloadStatus.Pausing);
+                    ParallelDownloadStatusChanged?.Invoke(sender, parallelStatus);
+                }
+                catch (Exception ex)
+                {
+                    Log.Error(ex, "[Task {TaskId}| Parallel {ParallelId:000}]", taskId, parallelId);
+                    parallelStatus.SetStatus(DownloadStatus.Error);
+                    ParallelDownloadStatusChanged?.Invoke(sender, parallelStatus);
+                }
+            }
+        }
+
+        tasks.Add(new Task(SpeedAction, source.Token));
+        return new DownloadTaskRecord(taskId, parallel, name, length, path, parallelSizeList, source, tasks, link,
+            savePath, referer is null ? "" : referer.AbsoluteUri);
 
         async void SpeedAction()
         {
@@ -401,5 +516,5 @@ public static class DownloadUtil
 
     public record DownloadTaskRecord(int TaskId, int Parallel, string Name, long Size, string Path,
         List<long> ParallelSizeList,
-        CancellationTokenSource TokenSource, List<Task> ScheduleTasks);
+        CancellationTokenSource TokenSource, List<Task> ScheduleTasks, string Link, string SavePath, string Referer);
 }

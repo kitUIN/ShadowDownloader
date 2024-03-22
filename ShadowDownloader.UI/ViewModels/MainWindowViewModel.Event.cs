@@ -38,7 +38,7 @@ public partial class MainWindowViewModel
 
     private void OnParallelDownloadProcessChanged(object? sender, ParallelDownloadProcessArg e)
     {
-        if (GetParallelDownloadTask(e.TaskId, e.ParallelId) is { } pTask)
+        if (GetParallelDownloadTask(e.TaskId, e.ParallelId) is { } pTask && pTask.Status != DownloadStatus.Completed)
         {
             pTask.Percent = e.Progress;
             pTask.Received = e.Received;
@@ -50,7 +50,10 @@ public partial class MainWindowViewModel
         if (GetDownloadTask(e.TaskId) is { } task)
         {
             task.Speed = e.Speed;
-            var tasks = task.Siblings.Select(pTask => pTask.SaveDbAsync()).ToList();
+            var tasks = task.Siblings
+                .Where(x => x.Status != DownloadStatus.Completed)
+                .Select(pTask => pTask.SaveDbAsync())
+                .ToList();
             tasks.Add(task.SaveDbAsync());
             await Task.WhenAll(tasks);
         }
@@ -69,7 +72,8 @@ public partial class MainWindowViewModel
     {
         Log.Information("下载任务[Task {TaskId}| Parallel {ParallelId:000}] 当前状态: {Status}", e.TaskId, e.ParallelId,
             e.Status);
-        if (e.Status != DownloadStatus.Pending && GetParallelDownloadTask(e.TaskId, e.ParallelId) is { } pTask)
+        if (e.Status != DownloadStatus.Pending &&
+            GetParallelDownloadTask(e.TaskId, e.ParallelId) is { } pTask)
         {
             pTask.Status = e.Status;
             await pTask.SaveDbAsync();

@@ -1,10 +1,13 @@
-﻿using System.Collections.ObjectModel;
+﻿using System;
+using System.Collections.ObjectModel;
+using System.Linq;
 using System.Reactive;
 using System.Threading;
 using System.Threading.Tasks;
 using FluentAvalonia.UI.Controls;
 using ReactiveUI;
 using ShadowDownloader.Enum;
+using ShadowDownloader.UI.Extension;
 using ShadowDownloader.UI.ViewModels;
 
 namespace ShadowDownloader.UI.Models;
@@ -15,6 +18,9 @@ public class DownloadTask : ReactiveObject
     {
     }
 
+    public string Link { get; }
+    public string SavePath { get; }
+    public string Referer { get; }
     public int TaskId { get; protected set; }
 
     private string _name = "";
@@ -101,7 +107,8 @@ public class DownloadTask : ReactiveObject
 
     public string AdapterId { get; protected set; } = "";
 
-    public DownloadTask(int taskId, string name, long size, string adapterId, int parallel = 0,
+    public DownloadTask(int taskId, string name, long size, string adapterId, string link = "", string savePath = "",
+        string referer = "", int parallel = 0,
         CancellationTokenSource? source = null, bool canParallel = true
     )
     {
@@ -112,6 +119,9 @@ public class DownloadTask : ReactiveObject
         CancellationTokenSource = source;
         AdapterId = adapterId;
         CanParallel = canParallel;
+        Link = link;
+        SavePath = savePath;
+        Referer = referer;
     }
 
     public DownloadTask(DbDownloadTask dbDownloadTask)
@@ -124,6 +134,9 @@ public class DownloadTask : ReactiveObject
         Received = dbDownloadTask.Received;
         AdapterId = dbDownloadTask.AdapterId;
         CanParallel = dbDownloadTask.CanParallel;
+        Referer = dbDownloadTask.Referer;
+        SavePath = dbDownloadTask.SavePath;
+        Link = dbDownloadTask.Link;
         Status = dbDownloadTask.Status == DownloadStatus.Running ? DownloadStatus.Pausing : dbDownloadTask.Status;
         CancellationTokenSource = new CancellationTokenSource();
     }
@@ -156,6 +169,19 @@ public class DownloadTask : ReactiveObject
         await dialog.ShowAsync();
     }
 
+
+    public void Retry()
+    {
+        if (CanParallel)
+        {
+            var referer = string.IsNullOrEmpty(Referer) ? null : new Uri(Referer);
+            var taskRecord = DownloadUtil.RetryDownloadWithParallel(Link, Size, Name, SavePath, referer, null,
+                Siblings[0].Size, TaskId, Siblings.Select(sibling => sibling.Received).ToList());
+            taskRecord.ScheduleTasks.StartAll();
+            CancellationTokenSource = taskRecord.TokenSource;
+        }
+    }
+
     private void CheckStatus()
     {
         switch (Status)
@@ -170,6 +196,7 @@ public class DownloadTask : ReactiveObject
                 break;
             // 暂停则继续
             case DownloadStatus.Pausing:
+                Retry();
                 break;
             case DownloadStatus.Pending:
                 break;
@@ -178,7 +205,7 @@ public class DownloadTask : ReactiveObject
         }
     }
 
-    private CancellationTokenSource? CancellationTokenSource { get; }
+    private CancellationTokenSource? CancellationTokenSource { get; set; }
 
     public void Append(ParallelDownloadTask task)
     {
@@ -199,6 +226,7 @@ public class DownloadTask : ReactiveObject
             Size = Size,
             Path = Path,
             Status = Status,
+            Link = Link,
             CanParallel = CanParallel
         }).ExecuteCommandAsync();
     }
