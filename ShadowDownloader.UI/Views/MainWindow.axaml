@@ -2,7 +2,7 @@
     Height="750"
     Icon="/Assets/avalonia-logo.ico"
     Title="ShadowDownloader.UI"
-    Width="700"
+    Width="850"
     WindowStartupLocation="CenterScreen"
     d:DesignHeight="450"
     d:DesignWidth="800"
@@ -130,7 +130,7 @@
                                 </Style>
                             </Expander.Styles>
                             <Expander.Header>
-                                <Grid ColumnDefinitions="Auto,*,Auto,*,Auto" Margin="0,10">
+                                <Grid ColumnDefinitions="Auto,*,Auto" Margin="0,10">
                                     <StackPanel
                                         Grid.Column="0"
                                         Orientation="Horizontal"
@@ -143,7 +143,7 @@
                                         <TextBlock
                                             FontSize="15"
                                             FontWeight="Medium"
-                                            MaxWidth="150"
+                                            MinWidth="100"
                                             Text="{Binding Name}"
                                             TextTrimming="CharacterEllipsis"
                                             ToolTip.Tip="{Binding Name}"
@@ -172,42 +172,42 @@
                                                 Icon="Delete24Regular"
                                                 Width="16" />
                                         </ui:HyperlinkButton>
-                                    </StackPanel>
-                                    <StackPanel
-                                        Grid.Column="4"
-                                        Orientation="Horizontal"
-                                        Spacing="10"
-                                        VerticalAlignment="Center">
-                                        <StackPanel VerticalAlignment="Center">
-                                            <Grid ColumnDefinitions="Auto,*,Auto,*,Auto">
-                                                <TextBlock
-                                                    Grid.Column="0"
-                                                    IsVisible="{Binding Status, Converter={StaticResource TaskSpeedEnableConverter}}"
-                                                    Text="{Binding Speed, Converter={StaticResource SpeedConverter}}" />
-                                                <TextBlock Grid.Column="2" Text="{Binding Received, Converter={StaticResource SizeConverter}}" />
-                                                <TextBlock
-                                                    Grid.Column="4"
-                                                    IsVisible="{Binding Status, Converter={StaticResource TaskSpeedEnableConverter}}"
-                                                    Text="{Binding RemainTime, Converter={StaticResource RemainTimeConverter}}" />
-                                            </Grid>
-                                            <ProgressBar
-                                                Foreground="{Binding Status, Converter={StaticResource ProgressColorConverter}}"
-                                                Maximum="100"
-                                                Minimum="0"
-                                                Value="{Binding Percent}"
-                                                Width="200" />
+                                        <StackPanel
+                                            Grid.Column="3"
+                                            Orientation="Horizontal"
+                                            Spacing="10"
+                                            VerticalAlignment="Center">
+                                            <StackPanel VerticalAlignment="Center">
+                                                <Grid ColumnDefinitions="Auto,*,Auto,*,Auto">
+                                                    <TextBlock
+                                                        Grid.Column="0"
+                                                        IsVisible="{Binding Status, Converter={StaticResource TaskSpeedEnableConverter}}"
+                                                        Text="{Binding Speed, Converter={StaticResource SpeedConverter}}" />
+                                                    <TextBlock Grid.Column="2" Text="{Binding Received, Converter={StaticResource SizeConverter}}" />
+                                                    <TextBlock
+                                                        Grid.Column="4"
+                                                        IsVisible="{Binding Status, Converter={StaticResource TaskSpeedEnableConverter}}"
+                                                        Text="{Binding RemainTime, Converter={StaticResource RemainTimeConverter}}" />
+                                                </Grid>
+                                                <ProgressBar
+                                                    Foreground="{Binding Status, Converter={StaticResource ProgressColorConverter}}"
+                                                    Maximum="100"
+                                                    Minimum="0"
+                                                    Value="{Binding Percent}"
+                                                    Width="200" />
+                                            </StackPanel>
+                                            <TextBlock
+                                                Text="{Binding Size, Converter={StaticResource SizeConverter}}"
+                                                VerticalAlignment="Center"
+                                                Width="60" />
+                                            <TextBlock
+                                                Text="{Binding Percent, Converter={StaticResource PercentConverter}}"
+                                                ToolTip.Tip="{Binding Received, Converter={StaticResource SizeConverter}, ConverterParameter=tip}"
+                                                VerticalAlignment="Center"
+                                                Width="50" />
                                         </StackPanel>
-                                        <TextBlock
-                                            Text="{Binding Size, Converter={StaticResource SizeConverter}}"
-                                            VerticalAlignment="Center"
-                                            Width="60" />
-                                        <TextBlock
-                                            Text="{Binding Percent, Converter={StaticResource PercentConverter}}"
-                                            ToolTip.Tip="{Binding Received, Converter={StaticResource SizeConverter}, ConverterParameter=tip}"
-                                            VerticalAlignment="Center"
-                                            Width="50" />
-
                                     </StackPanel>
+
                                 </Grid>
                             </Expander.Header>
                             <ListBox
